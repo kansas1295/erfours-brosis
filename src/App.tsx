@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Calculator, 
@@ -34,7 +34,9 @@ import {
   Search,
   Filter,
   TrendingDown,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -213,6 +215,19 @@ export default function App() {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
+
+  // Scroll Optimization Ref for the Horizontal Dashboard Table
+  const dailyTableScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollDailyTable = (direction: 'left' | 'right') => {
+    if (dailyTableScrollRef.current) {
+      const scrollAmount = 350; // Scroll columns smoothly
+      dailyTableScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Input State
   const [initialPop, setInitialPop] = useState<string>(() => {
@@ -1620,6 +1635,11 @@ export default function App() {
     });
   }, [dailyDashboardData, dailyTableSearch, dailyTableWeekFilter]);
 
+  // Display only the last 7 entries for the daily dashboard table
+  const displayedDailyDashboardData = useMemo(() => {
+    return filteredDailyDashboardData.slice(-7);
+  }, [filteredDailyDashboardData]);
+
   // Export Daily Dashboard Data to CSV
   const handleExportDailyCSV = () => {
     if (filteredDailyDashboardData.length === 0) return;
@@ -2134,16 +2154,41 @@ export default function App() {
                             <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Ringkasan pakan, kematian harian, stok pakan & perkembangan bobot</p>
                           </div>
                           
-                          {filteredDailyDashboardData.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={handleExportDailyCSV}
-                              className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all self-start sm:self-auto"
-                            >
-                              <Download size={12} />
-                              <span>Unduh CSV</span>
-                            </button>
-                          )}
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            {/* Scroll Assist Buttons */}
+                            {filteredDailyDashboardData.length > 0 && (
+                              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => scrollDailyTable('left')}
+                                  className="p-1 rounded-md text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-xs transition-all cursor-pointer flex items-center justify-center"
+                                  title="Scroll Kiri"
+                                >
+                                  <ChevronLeft size={14} />
+                                </button>
+                                <span className="text-[8px] font-black uppercase text-slate-400 px-1 select-none">Navigasi</span>
+                                <button
+                                  type="button"
+                                  onClick={() => scrollDailyTable('right')}
+                                  className="p-1 rounded-md text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-xs transition-all cursor-pointer flex items-center justify-center"
+                                  title="Scroll Kanan"
+                                >
+                                  <ChevronRight size={14} />
+                                </button>
+                              </div>
+                            )}
+
+                            {filteredDailyDashboardData.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={handleExportDailyCSV}
+                                className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
+                              >
+                                <Download size={12} />
+                                <span>Unduh CSV</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Search and Filters */}
@@ -2190,7 +2235,10 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent pb-3">
+                      <div 
+                        ref={dailyTableScrollRef}
+                        className="overflow-x-auto custom-scrollbar pb-4"
+                      >
                         {filteredDailyDashboardData.length === 0 ? (
                           <div className="p-8 text-center bg-slate-50/50">
                             <p className="text-[11px] font-black text-slate-400 uppercase tracking-tight">Tidak Ada Data yang Cocok</p>
@@ -2201,12 +2249,12 @@ export default function App() {
                             <tbody className="divide-y divide-slate-100 text-xs">
                               {/* Row 1: Hari Ke */}
                               <tr className="border-b border-slate-100">
-                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                <td className="w-[150px] min-w-[150px] py-4 px-4 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_10px_rgba(0,0,0,0.04)] whitespace-nowrap">
                                   Hari Ke
                                 </td>
-                                {filteredDailyDashboardData.map((row) => (
-                                  <td key={row.id + '-age'} className="py-4 px-6 font-bold text-slate-800 whitespace-nowrap bg-slate-50/50">
-                                    <span className="inline-flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-700 font-black text-[10px] w-14 py-1 rounded-md uppercase tracking-wider">
+                                {displayedDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-age'} className="w-[130px] min-w-[130px] py-4 px-3 text-center font-bold text-slate-800 whitespace-nowrap bg-slate-50/50">
+                                    <span className="inline-flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-700 font-black text-[10px] w-16 py-1 rounded-md uppercase tracking-wider">
                                       Hari {row.age}
                                     </span>
                                   </td>
@@ -2215,11 +2263,11 @@ export default function App() {
 
                               {/* Row 2: Tanggal */}
                               <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
-                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                <td className="w-[150px] min-w-[150px] py-4 px-4 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_10px_rgba(0,0,0,0.04)] whitespace-nowrap">
                                   Tanggal
                                 </td>
-                                {filteredDailyDashboardData.map((row) => (
-                                  <td key={row.id + '-date'} className="py-4 px-6 font-bold text-slate-600 font-mono whitespace-nowrap">
+                                {displayedDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-date'} className="w-[130px] min-w-[130px] py-4 px-3 text-center font-bold text-slate-600 font-mono whitespace-nowrap">
                                     {row.formattedDate}
                                   </td>
                                 ))}
@@ -2227,12 +2275,12 @@ export default function App() {
 
                               {/* Row 3: Pakan Harian */}
                               <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
-                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                <td className="w-[150px] min-w-[150px] py-4 px-4 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_10px_rgba(0,0,0,0.04)] whitespace-nowrap">
                                   Pakan Harian
                                 </td>
-                                {filteredDailyDashboardData.map((row) => (
-                                  <td key={row.id + '-feed'} className="py-4 px-6 whitespace-nowrap">
-                                    <div className="flex flex-col">
+                                {displayedDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-feed'} className="w-[130px] min-w-[130px] py-4 px-3 text-center whitespace-nowrap">
+                                    <div className="flex flex-col items-center">
                                       <span className="font-black text-slate-800">{row.dailyFeedSak.toFixed(2)} SAK</span>
                                       <span className="text-[10px] text-slate-400 font-bold uppercase">{row.dailyFeedKg.toLocaleString()} KG</span>
                                     </div>
@@ -2242,12 +2290,12 @@ export default function App() {
 
                               {/* Row 4: Kematian Harian */}
                               <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
-                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                <td className="w-[150px] min-w-[150px] py-4 px-4 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_10px_rgba(0,0,0,0.04)] whitespace-nowrap">
                                   Kematian Harian
                                 </td>
-                                {filteredDailyDashboardData.map((row) => (
-                                  <td key={row.id + '-deaths'} className="py-4 px-6 whitespace-nowrap">
-                                    <div className="flex flex-col">
+                                {displayedDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-deaths'} className="w-[130px] min-w-[130px] py-4 px-3 text-center whitespace-nowrap">
+                                    <div className="flex flex-col items-center">
                                       <span className={`font-black ${row.dailyDeaths > 0 ? 'text-rose-600' : 'text-slate-700'}`}>
                                         {row.dailyDeaths} Ekor
                                       </span>
@@ -2265,16 +2313,17 @@ export default function App() {
 
                               {/* Row 5: Berat Harian */}
                               <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
-                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                <td className="w-[150px] min-w-[150px] py-4 px-4 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_10px_rgba(0,0,0,0.04)] whitespace-nowrap">
                                   Berat Harian
                                 </td>
-                                {filteredDailyDashboardData.map((row, index) => {
-                                  // Since sortedHistory is sorted in ascending order (Day 1, 2, ...), the previous index in filteredDailyDashboardData is indeed the chronological previous record
-                                  const prevRow = index > 0 ? filteredDailyDashboardData[index - 1] : null;
+                                {displayedDailyDashboardData.map((row) => {
+                                  // Locate this row's position in the original full dataset to calculate accurate chronological trend
+                                  const originalIndex = filteredDailyDashboardData.findIndex(r => r.id === row.id);
+                                  const prevRow = originalIndex > 0 ? filteredDailyDashboardData[originalIndex - 1] : null;
                                   const weightDiff = prevRow ? row.avgWeightGr - prevRow.avgWeightGr : 0;
                                   return (
-                                    <td key={row.id + '-weight'} className="py-4 px-6 whitespace-nowrap">
-                                      <div className="flex flex-col">
+                                    <td key={row.id + '-weight'} className="w-[130px] min-w-[130px] py-4 px-3 text-center whitespace-nowrap">
+                                      <div className="flex flex-col items-center">
                                         <span className="font-black text-slate-800">{row.avgWeightGr.toLocaleString()} g</span>
                                         {prevRow ? (
                                           <div className={`flex items-center gap-0.5 text-[9px] font-black uppercase tracking-tight ${weightDiff >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
@@ -2292,13 +2341,13 @@ export default function App() {
 
                               {/* Row 6: Sisa Stok Pakan */}
                               <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
-                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                <td className="w-[150px] min-w-[150px] py-4 px-4 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_10px_rgba(0,0,0,0.04)] whitespace-nowrap">
                                   Sisa Stok Pakan
                                 </td>
-                                {filteredDailyDashboardData.map((row) => (
-                                  <td key={row.id + '-stock'} className="py-4 px-6 whitespace-nowrap">
-                                    <div className="flex flex-col">
-                                      <div className="flex items-center gap-2">
+                                {displayedDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-stock'} className="w-[130px] min-w-[130px] py-4 px-3 text-center whitespace-nowrap">
+                                    <div className="flex flex-col items-center">
+                                      <div className="flex items-center gap-1 justify-center">
                                         <span className="font-black text-slate-800">{row.feedStockSak.toFixed(2)} SAK</span>
                                         {row.feedStockSak < 15 ? (
                                           <span className="bg-rose-50 border border-rose-100 text-rose-600 font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">Kritis</span>
@@ -2316,11 +2365,11 @@ export default function App() {
 
                               {/* Row 7: Tindakan */}
                               <tr className="hover:bg-slate-50/20 transition-colors">
-                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                <td className="w-[150px] min-w-[150px] py-4 px-4 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[4px_0_10px_rgba(0,0,0,0.04)] whitespace-nowrap">
                                   Tindakan
                                 </td>
-                                {filteredDailyDashboardData.map((row) => (
-                                  <td key={row.id + '-action'} className="py-4 px-6 text-center whitespace-nowrap">
+                                {displayedDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-action'} className="w-[130px] min-w-[130px] py-4 px-3 text-center whitespace-nowrap">
                                     <button
                                       type="button"
                                       onClick={() => deleteRecord(row.id)}
