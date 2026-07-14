@@ -2190,98 +2190,148 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="max-h-[500px] overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent relative">
+                      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent pb-3">
                         {filteredDailyDashboardData.length === 0 ? (
                           <div className="p-8 text-center bg-slate-50/50">
                             <p className="text-[11px] font-black text-slate-400 uppercase tracking-tight">Tidak Ada Data yang Cocok</p>
                             <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase leading-tight">Coba bersihkan pencarian atau ganti filter minggu.</p>
                           </div>
                         ) : (
-                          <table className="w-full border-collapse text-left">
-                            <thead className="bg-slate-50 text-[9px] uppercase font-black tracking-widest text-slate-400 sticky top-0 z-10 shadow-sm">
-                              <tr>
-                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Hari Ke</th>
-                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Tanggal</th>
-                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Pakan Harian</th>
-                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Kematian Harian</th>
-                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Berat Harian</th>
-                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Sisa Stok Pakan</th>
-                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50 text-center">Tindakan</th>
-                              </tr>
-                            </thead>
+                          <table className="min-w-max w-full border-collapse text-left">
                             <tbody className="divide-y divide-slate-100 text-xs">
-                              {filteredDailyDashboardData.map((row, index) => {
-                                // Calculate previous weight to show trend
-                                const prevRow = index > 0 ? filteredDailyDashboardData[index - 1] : null;
-                                const weightDiff = prevRow ? row.avgWeightGr - prevRow.avgWeightGr : 0;
-                                
-                                return (
-                                  <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="py-4 px-6">
-                                      <span className="inline-flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-700 font-black text-[10px] w-14 py-1 rounded-md uppercase tracking-wider">
-                                        Hari {row.age}
+                              {/* Row 1: Hari Ke */}
+                              <tr className="border-b border-slate-100">
+                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                  Hari Ke
+                                </td>
+                                {filteredDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-age'} className="py-4 px-6 font-bold text-slate-800 whitespace-nowrap bg-slate-50/50">
+                                    <span className="inline-flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-700 font-black text-[10px] w-14 py-1 rounded-md uppercase tracking-wider">
+                                      Hari {row.age}
+                                    </span>
+                                  </td>
+                                ))}
+                              </tr>
+
+                              {/* Row 2: Tanggal */}
+                              <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
+                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                  Tanggal
+                                </td>
+                                {filteredDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-date'} className="py-4 px-6 font-bold text-slate-600 font-mono whitespace-nowrap">
+                                    {row.formattedDate}
+                                  </td>
+                                ))}
+                              </tr>
+
+                              {/* Row 3: Pakan Harian */}
+                              <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
+                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                  Pakan Harian
+                                </td>
+                                {filteredDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-feed'} className="py-4 px-6 whitespace-nowrap">
+                                    <div className="flex flex-col">
+                                      <span className="font-black text-slate-800">{row.dailyFeedSak.toFixed(2)} SAK</span>
+                                      <span className="text-[10px] text-slate-400 font-bold uppercase">{row.dailyFeedKg.toLocaleString()} KG</span>
+                                    </div>
+                                  </td>
+                                ))}
+                              </tr>
+
+                              {/* Row 4: Kematian Harian */}
+                              <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
+                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                  Kematian Harian
+                                </td>
+                                {filteredDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-deaths'} className="py-4 px-6 whitespace-nowrap">
+                                    <div className="flex flex-col">
+                                      <span className={`font-black ${row.dailyDeaths > 0 ? 'text-rose-600' : 'text-slate-700'}`}>
+                                        {row.dailyDeaths} Ekor
                                       </span>
-                                    </td>
-                                    <td className="py-4 px-6 font-bold text-slate-600 font-mono">
-                                      {row.formattedDate}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                      <div className="flex flex-col">
-                                        <span className="font-black text-slate-800">{row.dailyFeedSak.toFixed(2)} SAK</span>
-                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{row.dailyFeedKg.toLocaleString()} KG</span>
-                                      </div>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                      <div className="flex flex-col">
-                                        <span className={`font-black ${row.dailyDeaths > 0 ? 'text-rose-600' : 'text-slate-700'}`}>
-                                          {row.dailyDeaths} Ekor
+                                      {row.dailyDeaths > 0 ? (
+                                        <span className="text-[10px] text-rose-400 font-black">
+                                          {row.mortalityRate.toFixed(2)}%
                                         </span>
-                                        {row.dailyDeaths > 0 && (
-                                          <span className="text-[10px] text-rose-400 font-black">
-                                            {row.mortalityRate.toFixed(2)}%
-                                          </span>
-                                        )}
-                                      </div>
-                                    </td>
-                                    <td className="py-4 px-6">
+                                      ) : (
+                                        <span className="text-[10px] text-slate-300 font-black">-</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                ))}
+                              </tr>
+
+                              {/* Row 5: Berat Harian */}
+                              <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
+                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                  Berat Harian
+                                </td>
+                                {filteredDailyDashboardData.map((row, index) => {
+                                  // Since sortedHistory is sorted in ascending order (Day 1, 2, ...), the previous index in filteredDailyDashboardData is indeed the chronological previous record
+                                  const prevRow = index > 0 ? filteredDailyDashboardData[index - 1] : null;
+                                  const weightDiff = prevRow ? row.avgWeightGr - prevRow.avgWeightGr : 0;
+                                  return (
+                                    <td key={row.id + '-weight'} className="py-4 px-6 whitespace-nowrap">
                                       <div className="flex flex-col">
                                         <span className="font-black text-slate-800">{row.avgWeightGr.toLocaleString()} g</span>
-                                        {prevRow && (
+                                        {prevRow ? (
                                           <div className={`flex items-center gap-0.5 text-[9px] font-black uppercase tracking-tight ${weightDiff >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
                                             {weightDiff >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                                             <span>{weightDiff >= 0 ? `+${weightDiff}` : weightDiff} g</span>
                                           </div>
+                                        ) : (
+                                          <span className="text-[10px] text-slate-300 font-black">-</span>
                                         )}
                                       </div>
                                     </td>
-                                    <td className="py-4 px-6">
-                                      <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-black text-slate-800">{row.feedStockSak.toFixed(2)} SAK</span>
-                                          {row.feedStockSak < 15 ? (
-                                            <span className="bg-rose-50 border border-rose-100 text-rose-600 font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">Kritis</span>
-                                          ) : row.feedStockSak < 30 ? (
-                                            <span className="bg-amber-50 border border-amber-100 text-amber-600 font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">Menipis</span>
-                                          ) : (
-                                            <span className="bg-emerald-50 border border-emerald-100 text-emerald-600 font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">Aman</span>
-                                          )}
-                                        </div>
-                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{row.feedStockKg.toLocaleString()} KG</span>
+                                  );
+                                })}
+                              </tr>
+
+                              {/* Row 6: Sisa Stok Pakan */}
+                              <tr className="border-b border-slate-100 hover:bg-slate-50/20 transition-colors">
+                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                  Sisa Stok Pakan
+                                </td>
+                                {filteredDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-stock'} className="py-4 px-6 whitespace-nowrap">
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-black text-slate-800">{row.feedStockSak.toFixed(2)} SAK</span>
+                                        {row.feedStockSak < 15 ? (
+                                          <span className="bg-rose-50 border border-rose-100 text-rose-600 font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">Kritis</span>
+                                        ) : row.feedStockSak < 30 ? (
+                                          <span className="bg-amber-50 border border-amber-100 text-amber-600 font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">Menipis</span>
+                                        ) : (
+                                          <span className="bg-emerald-50 border border-emerald-100 text-emerald-600 font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">Aman</span>
+                                        )}
                                       </div>
-                                    </td>
-                                    <td className="py-4 px-6 text-center">
-                                      <button
-                                        type="button"
-                                        onClick={() => deleteRecord(row.id)}
-                                        className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all"
-                                        title="Hapus data hari ini"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
+                                      <span className="text-[10px] text-slate-400 font-bold uppercase">{row.feedStockKg.toLocaleString()} KG</span>
+                                    </div>
+                                  </td>
+                                ))}
+                              </tr>
+
+                              {/* Row 7: Tindakan */}
+                              <tr className="hover:bg-slate-50/20 transition-colors">
+                                <td className="py-4 px-6 font-black text-[10px] text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)] whitespace-nowrap">
+                                  Tindakan
+                                </td>
+                                {filteredDailyDashboardData.map((row) => (
+                                  <td key={row.id + '-action'} className="py-4 px-6 text-center whitespace-nowrap">
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteRecord(row.id)}
+                                      className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all inline-flex items-center justify-center"
+                                      title="Hapus data hari ini"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </td>
+                                ))}
+                              </tr>
                             </tbody>
                           </table>
                         )}
