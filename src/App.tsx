@@ -2190,7 +2190,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="overflow-x-auto">
+                      <div className="max-h-[500px] overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent relative">
                         {filteredDailyDashboardData.length === 0 ? (
                           <div className="p-8 text-center bg-slate-50/50">
                             <p className="text-[11px] font-black text-slate-400 uppercase tracking-tight">Tidak Ada Data yang Cocok</p>
@@ -2198,15 +2198,15 @@ export default function App() {
                           </div>
                         ) : (
                           <table className="w-full border-collapse text-left">
-                            <thead>
-                              <tr className="bg-slate-50/70 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                                <th className="py-3 px-6">Hari Ke</th>
-                                <th className="py-3 px-6">Tanggal</th>
-                                <th className="py-3 px-6">Pakan Harian</th>
-                                <th className="py-3 px-6">Kematian Harian</th>
-                                <th className="py-3 px-6">Berat Harian</th>
-                                <th className="py-3 px-6">Sisa Stok Pakan</th>
-                                <th className="py-3 px-6 text-center">Tindakan</th>
+                            <thead className="bg-slate-50 text-[9px] uppercase font-black tracking-widest text-slate-400 sticky top-0 z-10 shadow-sm">
+                              <tr>
+                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Hari Ke</th>
+                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Tanggal</th>
+                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Pakan Harian</th>
+                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Kematian Harian</th>
+                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Berat Harian</th>
+                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Sisa Stok Pakan</th>
+                                <th className="py-4 px-6 border-b border-slate-100 bg-slate-50 text-center">Tindakan</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-xs">
