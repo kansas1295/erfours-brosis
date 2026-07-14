@@ -4536,7 +4536,7 @@ export default function App() {
         </div>
         <div className="flex gap-8">
           <span className="flex items-center gap-2 text-emerald-500"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> DB PERSISTED</span>
-          <span>&copy; {new Date().getFullYear()} Erfours BroilerPro Systems LP</span>
+          <span>&copy; {new Date().getFullYear()} Erfours brosis Systems LP</span>
         </div>
       </footer>
 
@@ -4799,7 +4799,7 @@ export default function App() {
                         </div>
                       </div>
                       <h4 className="text-white text-xs font-black tracking-wider text-center">ERFOURS</h4>
-                      <p className="text-[7px] text-emerald-400 font-bold uppercase tracking-widest mt-1">BroilerPro APK</p>
+                      <p className="text-[7px] text-emerald-400 font-bold uppercase tracking-widest mt-1">Erfours brosis APK</p>
                     </div>
 
                     {/* Mock Launcher App Drawer */}

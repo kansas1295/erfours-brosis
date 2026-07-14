@@ -1,5 +1,5 @@
 {
-  "name": "Remix: Erfours Broiler system",
+  "name": "Remix: Erfours brosis",
   "description": "Aplikasi berbasis web untuk memantau performa harian peternakan ayam broiler: FCR, stok pakan, mortalitas, dan Indeks Performa (IP) secara real-time.",
   "requestFramePermissions": [],
   "majorCapabilities": [
