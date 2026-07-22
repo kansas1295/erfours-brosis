@@ -251,6 +251,8 @@ export default function App() {
   const [history, setHistory] = useState<FlockRecord[]>([]);
   const [harvestHistory, setHarvestHistory] = useState<HarvestRecord[]>([]);
   const [harvestActiveTab, setHarvestActiveTab] = useState<'sheet' | 'history'>('sheet');
+  const [weighingActiveTab, setWeighingActiveTab] = useState<'sheet' | 'history'>('sheet');
+  const [weighingSearch, setWeighingSearch] = useState('');
   const [historySelectedWeek, setHistorySelectedWeek] = useState<number | 'all'>('all');
 
   // Daily Dashboard States
@@ -1372,8 +1374,85 @@ export default function App() {
     setDiambilTgl('');
     setSecurityNama('');
     setSecurityTgl('');
-    alert('Data panen berhasil disimpan dengan Indeks Performa.');
+    alert('✅ Data panen & lembar timbangan berhasil disimpan.');
   };
+
+  const saveWeighingSheet = () => {
+    const hasWeighing = activeDrafts.some(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
+    const b = parseFloat(harvestBirds) || 0;
+    const tw = parseFloat(harvestTotalWeight) || 0;
+
+    if (!hasWeighing && b <= 0 && tw <= 0) {
+      alert('Mohon isi minimal 1 baris data timbangan (Jumlah Ekor & Netto Kg) sebelum menyimpan lembar timbangan.');
+      return;
+    }
+
+    saveHarvest();
+    setWeighingActiveTab('history');
+  };
+
+  const handleLoadWeighingRecord = (record: HarvestRecord) => {
+    const hasWeighings = activeDrafts.some(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
+    if (hasWeighings) {
+      if (!confirm('Lembar timbang aktif saat ini memiliki data. Apakah Anda yakin ingin memuat dan menimpa dengan data riwayat ini?')) {
+        return;
+      }
+    }
+
+    if (record.weighingDrafts && record.weighingDrafts.length > 0) {
+      const newDrafts: WeighingDraftInput[] = Array.from({ length: 90 }, (_, i) => {
+        if (i < record.weighingDrafts!.length) {
+          return {
+            id: `draft-${i}`,
+            birds: record.weighingDrafts![i].birds.toString(),
+            weight: record.weighingDrafts![i].weight.toString()
+          };
+        }
+        return { id: `draft-${i}`, birds: '', weight: '' };
+      });
+      setActiveDrafts(newDrafts);
+    } else {
+      setActiveDrafts(Array.from({ length: 90 }, (_, i) => ({ id: `draft-${i}`, birds: '', weight: '' })));
+    }
+
+    setHarvestDate(record.date || format(new Date(), 'yyyy-MM-dd'));
+    setHarvestAge(record.age ? record.age.toString() : '');
+    setHarvestBirds(record.birds ? record.birds.toString() : '');
+    setHarvestTotalWeight(record.totalWeight ? record.totalWeight.toString() : '');
+    setHarvestAvgWeight(record.avgWeight ? record.avgWeight.toFixed(3) : '');
+    setDataTimbangNo(record.dataTimbangNo || `PFL ${Math.floor(100000 + Math.random() * 900000)}`);
+    setSpbNo(record.spbNo || '');
+    setTimeArrived(record.timeArrived || '');
+    setTimeLoaded(record.timeLoaded || '');
+    setTimeCompleted(record.timeCompleted || '');
+    setTakenBy(record.takenBy || '');
+    setDriverName(record.driverName || '');
+    setPlateNo(record.plateNo || '');
+    setDriverSim(record.driverSim || '');
+    setStnkNo(record.stnkNo || '');
+    setDiserahkanNama(record.diserahkanNama || '');
+    setDiserahkanTgl(record.diserahkanTgl || '');
+    setDiambilNama(record.diambilNama || '');
+    setDiambilTgl(record.diambilTgl || '');
+    setSecurityNama(record.securityNama || '');
+    setSecurityTgl(record.securityTgl || '');
+
+    setWeighingActiveTab('sheet');
+    alert(`📋 Data Nota Timbang No. ${record.dataTimbangNo || record.id.slice(0, 8)} berhasil dimuat ke Lembar Timbangan Aktif.`);
+  };
+
+  const filteredWeighingHistory = useMemo(() => {
+    if (!weighingSearch.trim()) return harvestHistory;
+    const q = weighingSearch.toLowerCase().trim();
+    return harvestHistory.filter(r => 
+      (r.dataTimbangNo && r.dataTimbangNo.toLowerCase().includes(q)) ||
+      (r.spbNo && r.spbNo.toLowerCase().includes(q)) ||
+      (r.takenBy && r.takenBy.toLowerCase().includes(q)) ||
+      (r.driverName && r.driverName.toLowerCase().includes(q)) ||
+      (r.plateNo && r.plateNo.toLowerCase().includes(q)) ||
+      (r.date && r.date.includes(q))
+    );
+  }, [harvestHistory, weighingSearch]);
 
   const exportHarvestToCSV = () => {
     if (harvestHistory.length === 0) {
@@ -1638,6 +1717,33 @@ export default function App() {
   // Display only the last 7 entries for the daily dashboard table
   const displayedDailyDashboardData = useMemo(() => {
     return filteredDailyDashboardData.slice(-7);
+  }, [filteredDailyDashboardData]);
+
+  // Display daily feed stock information table sorted by newest first (latest 7 data)
+  const displayedDailyFeedStockTableData = useMemo(() => {
+    return [...displayedDailyDashboardData].reverse();
+  }, [displayedDailyDashboardData]);
+
+  // Feed Stock Statistics Summary
+  const feedStatsSummary = useMemo(() => {
+    if (filteredDailyDashboardData.length === 0) return null;
+    const sorted = [...filteredDailyDashboardData].sort((a, b) => a.age - b.age);
+    const latest = sorted[sorted.length - 1];
+    
+    // Calculate average daily consumption over the last 3 records to estimate lifespan
+    const last3Records = sorted.slice(-3);
+    const avgDailyFeedSak = last3Records.reduce((sum, r) => sum + r.dailyFeedSak, 0) / (last3Records.length || 1);
+    
+    const currentStockSak = latest.feedStockSak;
+    const estimatedDaysLeft = avgDailyFeedSak > 0 ? Math.round(currentStockSak / avgDailyFeedSak) : 0;
+    
+    return {
+      currentStockSak,
+      currentStockKg: currentStockSak * 50,
+      avgDailyFeedSak,
+      avgDailyFeedKg: avgDailyFeedSak * 50,
+      estimatedDaysLeft
+    };
   }, [filteredDailyDashboardData]);
 
   // Export Daily Dashboard Data to CSV
@@ -2061,44 +2167,143 @@ export default function App() {
                       ) : (
                         <div className="h-[280px] w-full">
                           {activeDailyChartTab === 'feed' ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <ComposedChart data={filteredDailyDashboardData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                  dataKey="age" 
-                                  tickFormatter={(v) => `Hari ${v}`}
-                                  axisLine={false} 
-                                  tickLine={false} 
-                                  tick={{fontSize: 9, fill: '#64748b', fontWeight: 700}}
-                                />
-                                <YAxis 
-                                  yAxisId="left"
-                                  axisLine={false}
-                                  tickLine={false}
-                                  tick={{fontSize: 9, fill: '#10b981', fontWeight: 700}}
-                                  label={{ value: 'Pakan (SAK)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 9, fill: '#10b981', fontWeight: 700 } }}
-                                />
-                                <YAxis 
-                                  yAxisId="right"
-                                  orientation="right"
-                                  axisLine={false}
-                                  tickLine={false}
-                                  tick={{fontSize: 9, fill: '#3b82f6', fontWeight: 700}}
-                                  label={{ value: 'Stok Pakan (SAK)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle', fontSize: 9, fill: '#3b82f6', fontWeight: 700 } }}
-                                />
-                                <Tooltip 
-                                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }}
-                                  formatter={(value: any, name: string) => {
-                                    const valNum = parseFloat(value) || 0;
-                                    if (name.includes("Sisa")) return [`${valNum.toFixed(2)} SAK (${(valNum * 50).toLocaleString()} kg)`, "Sisa Stok Pakan"];
-                                    return [`${valNum.toFixed(2)} SAK (${(valNum * 50).toLocaleString()} kg)`, "Konsumsi Pakan"];
-                                  }}
-                                />
-                                <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 700, marginTop: '5px' }} />
-                                <Bar yAxisId="left" dataKey="dailyFeedSak" fill="#10b981" radius={[4, 4, 0, 0]} name="Konsumsi Pakan (SAK)" barSize={24} />
-                                <Area yAxisId="right" type="monotone" dataKey="feedStockSak" fill="#3b82f6" stroke="#3b82f6" fillOpacity={0.12} name="Sisa Stok Pakan (SAK)" />
-                              </ComposedChart>
-                            </ResponsiveContainer>
+                            <div className="h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1.5">
+                              {/* 3 Widgets Statistics Summary Grid */}
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                {/* Current Feed Stock Widget */}
+                                <div className="bg-emerald-50/40 border border-emerald-100/60 rounded-xl p-3 flex items-center gap-3">
+                                  <div className="p-2 bg-emerald-100/80 text-emerald-800 rounded-lg shadow-2xs">
+                                    <Package size={14} className="stroke-[2.5]" />
+                                  </div>
+                                  <div>
+                                    <p className="text-[8px] font-black text-emerald-700 uppercase tracking-widest leading-none">Stok Saat Ini</p>
+                                    <p className="text-xs font-black text-slate-800 mt-1 leading-none">
+                                      {feedStatsSummary ? `${feedStatsSummary.currentStockSak.toFixed(2)} SAK` : '0.00 SAK'}
+                                    </p>
+                                    <p className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">
+                                      {feedStatsSummary ? `~${feedStatsSummary.currentStockKg.toLocaleString()} kg` : '0 kg'}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Average Consumption Widget */}
+                                <div className="bg-blue-50/40 border border-blue-100/60 rounded-xl p-3 flex items-center gap-3">
+                                  <div className="p-2 bg-blue-100/80 text-blue-800 rounded-lg shadow-2xs">
+                                    <Activity size={14} className="stroke-[2.5]" />
+                                  </div>
+                                  <div>
+                                    <p className="text-[8px] font-black text-blue-700 uppercase tracking-widest leading-none">Konsumsi Harian</p>
+                                    <p className="text-xs font-black text-slate-800 mt-1 leading-none">
+                                      {feedStatsSummary ? `${feedStatsSummary.avgDailyFeedSak.toFixed(2)} SAK` : '0.00 SAK'}
+                                    </p>
+                                    <p className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">
+                                      {feedStatsSummary ? `~${feedStatsSummary.avgDailyFeedKg.toFixed(1)} kg/hari` : '0 kg/hari'}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Estimated Lifespan Widget */}
+                                <div className="bg-amber-50/40 border border-amber-100/60 rounded-xl p-3 flex items-center gap-3">
+                                  <div className="p-2 bg-amber-100/80 text-amber-800 rounded-lg shadow-2xs">
+                                    <Clock size={14} className="stroke-[2.5]" />
+                                  </div>
+                                  <div>
+                                    <p className="text-[8px] font-black text-amber-700 uppercase tracking-widest leading-none">Ketahanan Stok</p>
+                                    <p className="text-xs font-black text-slate-800 mt-1 leading-none">
+                                      {feedStatsSummary && feedStatsSummary.currentStockSak > 0 
+                                        ? (feedStatsSummary.estimatedDaysLeft > 0 ? `~${feedStatsSummary.estimatedDaysLeft} Hari` : 'Stok Kritis') 
+                                        : 'Stok Habis'}
+                                    </p>
+                                    <p className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">
+                                      {feedStatsSummary && feedStatsSummary.currentStockSak > 0 && feedStatsSummary.estimatedDaysLeft > 0
+                                        ? 'Berdasarkan tren rata-rata' 
+                                        : 'Segera beli pakan'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Feed Stock & Remaining Info Table */}
+                              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-slate-50/20">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-left border-collapse">
+                                    <thead>
+                                      <tr className="bg-slate-50/80 border-b border-slate-200">
+                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Hari</th>
+                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Tanggal</th>
+                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Konsumsi Harian</th>
+                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Sisa Stok</th>
+                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 bg-white">
+                                      {displayedDailyFeedStockTableData.length === 0 ? (
+                                        <tr>
+                                          <td colSpan={5} className="py-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-tight">
+                                            Tidak Ada Data Stok Pakan harian
+                                          </td>
+                                        </tr>
+                                      ) : (
+                                        displayedDailyFeedStockTableData.map((row) => (
+                                          <tr key={row.id + '-feed-stock-row'} className="hover:bg-slate-50/40 transition-colors">
+                                            <td className="py-2 px-3 text-center whitespace-nowrap">
+                                              <span className="inline-flex items-center justify-center bg-slate-100 text-slate-700 font-extrabold text-[9px] px-2 py-0.5 rounded-md">
+                                                Hari {row.age}
+                                              </span>
+                                            </td>
+                                            <td className="py-2 px-3 text-[10px] font-bold text-slate-600 whitespace-nowrap">
+                                              {row.formattedDate}
+                                            </td>
+                                            <td className="py-2 px-3 text-right whitespace-nowrap">
+                                              <div className="flex flex-col items-end">
+                                                <span className="text-[10px] font-extrabold text-slate-800">{row.dailyFeedSak.toFixed(2)} SAK</span>
+                                                <span className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">{row.dailyFeedKg.toLocaleString()} KG</span>
+                                              </div>
+                                            </td>
+                                            <td className="py-2 px-3 text-right whitespace-nowrap">
+                                              <div className="flex flex-col items-end">
+                                                <span className="text-[10px] font-black text-blue-600">{row.feedStockSak.toFixed(2)} SAK</span>
+                                                <span className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">{row.feedStockKg.toLocaleString()} KG</span>
+                                              </div>
+                                            </td>
+                                            <td className="py-2 px-3 text-center whitespace-nowrap">
+                                              {(() => {
+                                                const stock = row.feedStockSak;
+                                                if (stock <= 0) {
+                                                  return (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                                                      Habis
+                                                    </span>
+                                                  );
+                                                } else if (stock <= 5) {
+                                                  return (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-100">
+                                                      Kritis
+                                                    </span>
+                                                  );
+                                                } else if (stock <= 15) {
+                                                  return (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100">
+                                                      Menipis
+                                                    </span>
+                                                  );
+                                                } else {
+                                                  return (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                      Aman
+                                                    </span>
+                                                  );
+                                                }
+                                              })()}
+                                            </td>
+                                          </tr>
+                                        ))
+                                      )}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
                           ) : (
                             <ResponsiveContainer width="100%" height="100%">
                               <ComposedChart data={filteredDailyDashboardData}>
@@ -2793,37 +2998,83 @@ export default function App() {
                 <div className="px-6 py-4 border-b border-slate-100 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 sticky top-0 bg-white z-10">
                   {view === 'weighing' ? (
                     <>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Scale size={16} className="text-emerald-600" />
-                        <h3 className="text-xs font-black text-slate-850 uppercase tracking-widest">Data Timbang Digital</h3>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex items-center gap-2">
+                          <Scale size={16} className="text-emerald-600" />
+                          <h3 className="text-xs font-black text-slate-850 uppercase tracking-widest hidden sm:inline">Data Timbang</h3>
+                        </div>
+
+                        {/* Sub-tab Switcher */}
+                        <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-[10px] font-black uppercase">
+                          <button
+                            type="button"
+                            onClick={() => setWeighingActiveTab('sheet')}
+                            className={`px-3 py-1 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                              weighingActiveTab === 'sheet'
+                                ? 'bg-emerald-600 text-white shadow-2xs font-extrabold'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <FileText size={12} />
+                            <span>Lembar Aktif</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setWeighingActiveTab('history')}
+                            className={`px-3 py-1 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                              weighingActiveTab === 'history'
+                                ? 'bg-emerald-600 text-white shadow-2xs font-extrabold'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <History size={12} />
+                            <span>Riwayat Timbangan</span>
+                            <span className={`px-1.5 py-0.2 rounded-full text-[8.5px] font-mono ${
+                              weighingActiveTab === 'history' ? 'bg-emerald-800 text-emerald-100' : 'bg-slate-200 text-slate-700'
+                            }`}>
+                              {harvestHistory.length}
+                            </span>
+                          </button>
+                        </div>
                       </div>
                       
                       {/* Summary Table directly in the Header for the Weighing Sheet */}
-                      <div className="hidden xl:flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-lg max-w-xl text-[9px] font-mono leading-tight flex-1 mx-4">
-                        {headerTableData.map((col, idx) => (
-                          <div key={idx} className={`flex-1 px-1.5 py-0.5 text-center ${idx < 5 ? 'border-r border-slate-200' : ''}`}>
-                            <p className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{col.name}</p>
-                            <div className="flex flex-col font-bold">
-                              <span className="text-slate-700 whitespace-nowrap">{col.birds || 0} ekr</span>
-                              <span className="text-emerald-700 whitespace-nowrap">{col.weight ? `${col.weight.toFixed(2)} kg` : '-'}</span>
+                      {weighingActiveTab === 'sheet' && (
+                        <div className="hidden xl:flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-lg max-w-xl text-[9px] font-mono leading-tight flex-1 mx-4">
+                          {headerTableData.map((col, idx) => (
+                            <div key={idx} className={`flex-1 px-1.5 py-0.5 text-center ${idx < 5 ? 'border-r border-slate-200' : ''}`}>
+                              <p className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{col.name}</p>
+                              <div className="flex flex-col font-bold">
+                                <span className="text-slate-700 whitespace-nowrap">{col.birds || 0} ekr</span>
+                                <span className="text-emerald-700 whitespace-nowrap">{col.weight ? `${col.weight.toFixed(2)} kg` : '-'}</span>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="flex-1 px-1.5 py-0.5 text-center border-l-2 border-slate-300 bg-emerald-50/70 rounded">
+                            <p className="text-[7.5px] font-black text-emerald-800 uppercase tracking-widest leading-none mb-0.5">TOTAL</p>
+                            <div className="flex flex-col font-black">
+                              <span className="text-slate-800 whitespace-nowrap">
+                                {validActiveDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0)} Ekr
+                              </span>
+                              <span className="text-emerald-800 whitespace-nowrap">
+                                {validActiveDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0).toFixed(2)} Kg
+                              </span>
                             </div>
                           </div>
-                        ))}
-                        <div className="flex-1 px-1.5 py-0.5 text-center border-l-2 border-slate-300 bg-emerald-50/70 rounded">
-                          <p className="text-[7.5px] font-black text-emerald-800 uppercase tracking-widest leading-none mb-0.5">TOTAL</p>
-                          <div className="flex flex-col font-black">
-                            <span className="text-slate-800 whitespace-nowrap">
-                              {validActiveDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0)} Ekr
-                            </span>
-                            <span className="text-emerald-800 whitespace-nowrap">
-                              {validActiveDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0).toFixed(2)} Kg
-                            </span>
-                          </div>
                         </div>
-                      </div>
+                      )}
 
                       <div className="flex items-center gap-2 shrink-0">
-                        {hasWeighings && (
+                        {weighingActiveTab === 'sheet' && (
+                          <button
+                            type="button"
+                            onClick={saveWeighingSheet}
+                            className="flex items-center gap-1.5 transition-all bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest cursor-pointer shadow-2xs active:scale-95"
+                          >
+                            <Save size={12} /> Simpan Lembar Timbangan
+                          </button>
+                        )}
+                        {weighingActiveTab === 'sheet' && hasWeighings && (
                           <button
                             type="button"
                             onClick={() => {
@@ -2840,45 +3091,47 @@ export default function App() {
                             }}
                             className="flex items-center gap-1.5 transition-colors bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest cursor-pointer"
                           >
-                            <Trash2 size={11} /> Hapus Data Timbang
+                            <Trash2 size={11} /> Bersihkan
                           </button>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const printContents = document.getElementById('print-only-weighing-sheet')?.innerHTML;
-                            if (printContents) {
-                              const printWindow = window.open('', '_blank');
-                              if (printWindow) {
-                                printWindow.document.write(`
-                                  <html>
-                                    <head>
-                                      <title>Cetak Lembar Timbang Panen</title>
-                                      <script src="https://cdn.tailwindcss.com"></script>
-                                      <style>
-                                        body { padding: 40px; background: white; color: black; font-family: monospace; }
-                                        input { border: none !important; border-bottom: 1px dashed #ccc !important; background: transparent !important; pointer-events: none; }
-                                        input::placeholder { color: transparent; }
-                                        button, .no-print { display: none !important; }
-                                      </style>
-                                    </head>
-                                    <body>
-                                      ${printContents}
-                                    </body>
-                                  </html>
-                                `);
-                                printWindow.document.close();
-                                setTimeout(() => {
-                                  printWindow.print();
-                                  printWindow.close();
-                                }, 500);
+                        {weighingActiveTab === 'sheet' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const printContents = document.getElementById('print-only-weighing-sheet')?.innerHTML;
+                              if (printContents) {
+                                const printWindow = window.open('', '_blank');
+                                if (printWindow) {
+                                  printWindow.document.write(`
+                                    <html>
+                                      <head>
+                                        <title>Cetak Lembar Timbang Panen</title>
+                                        <script src="https://cdn.tailwindcss.com"></script>
+                                        <style>
+                                          body { padding: 40px; background: white; color: black; font-family: monospace; }
+                                          input { border: none !important; border-bottom: 1px dashed #ccc !important; background: transparent !important; pointer-events: none; }
+                                          input::placeholder { color: transparent; }
+                                          button, .no-print { display: none !important; }
+                                        </style>
+                                      </head>
+                                      <body>
+                                        ${printContents}
+                                      </body>
+                                    </html>
+                                  `);
+                                  printWindow.document.close();
+                                  setTimeout(() => {
+                                    printWindow.print();
+                                    printWindow.close();
+                                  }, 500);
+                                }
                               }
-                            }
-                          }}
-                          className="flex items-center gap-1.5 transition-colors bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest cursor-pointer"
-                        >
-                          <Printer size={11} /> Cetak Lembar Timbang
-                        </button>
+                            }}
+                            className="flex items-center gap-1.5 transition-colors bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest cursor-pointer"
+                          >
+                            <Printer size={11} /> Cetak
+                          </button>
+                        )}
                       </div>
                     </>
                   ) : (
@@ -2949,327 +3202,444 @@ export default function App() {
                 </div>
 
                 {view === 'weighing' ? (
-                  /* Interactive Paper Sheet Representation mimicking picture */
-                  <div className="flex-1 overflow-auto bg-slate-50/50 p-6 scrollbar-thin">
-                    <div 
-                      id="print-only-weighing-sheet"
-                      className="max-w-4xl mx-auto bg-white border border-slate-300 rounded-lg p-6 font-sans text-slate-800 shadow-md relative group/paper bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:16px_16px]"
-                    >
-                      {/* Paper Watermark Stamp style */}
-                      <div className="absolute right-4 top-16 border-2 border-dashed border-emerald-600/20 text-emerald-600/20 px-4 py-1 rounded text-2xl font-black uppercase tracking-widest pointer-events-none select-none transform rotate-12">
-                        Digital Twin
-                      </div>
-
-                      {/* Header Layout */}
-                      <div className="flex flex-col md:flex-row justify-between items-start border-b-2 border-slate-800 pb-4 mb-4 gap-4">
-                        <div>
-                          <div className="flex items-baseline gap-2 mb-1">
-                            <h3 className="text-base font-black text-slate-900 tracking-wider">DATA TIMBANG NO :</h3>
-                            <input 
-                              type="text" 
-                              value={dataTimbangNo} 
-                              onChange={(e) => setDataTimbangNo(e.target.value)} 
-                              placeholder="Tulis No Nota"
-                              className="border-b-2 border-slate-300 focus:border-slate-800 bg-transparent text-sm font-mono font-black focus:outline-none w-44 px-1"
+                  weighingActiveTab === 'history' ? (
+                    /* Riwayat Lembar Timbangan View */
+                    <div className="flex-1 overflow-auto bg-slate-50/50 p-6 scrollbar-thin flex flex-col gap-5">
+                      {/* Search & Stats Header */}
+                      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="relative flex-1 max-w-md">
+                            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+                            <input
+                              type="text"
+                              placeholder="Cari No. Nota, SPB, Sopir, atau Pembeli..."
+                              value={weighingSearch}
+                              onChange={(e) => setWeighingSearch(e.target.value)}
+                              className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
                             />
-                          </div>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-xs font-black text-slate-500 tracking-wider">SPB NO :</span>
-                            <input 
-                              type="text" 
-                              value={spbNo} 
-                              onChange={(e) => setSpbNo(e.target.value)} 
-                              placeholder="Tulis No SPB"
-                              className="border-b border-slate-300 focus:border-slate-800 bg-transparent text-xs font-mono font-black focus:outline-none w-44 px-1"
-                            />
+                            {weighingSearch && (
+                              <button
+                                type="button"
+                                onClick={() => setWeighingSearch('')}
+                                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
                           </div>
                         </div>
-                        
-                        {/* Interactive Scale Totals Display on Paper */}
-                        <div className="border border-slate-800 p-3 bg-white flex items-center gap-6 font-mono self-stretch md:self-auto rounded">
-                          <div className="text-center border-r border-slate-200 pr-4">
-                            <p className="text-[8px] font-black uppercase text-slate-450">Ekor (Total)</p>
-                            <p className="text-sm font-black text-slate-900">
-                              {validActiveDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0).toLocaleString()} <span className="text-[9px] font-normal text-slate-400">EKR</span>
-                            </p>
+
+                        <div className="flex items-center gap-4 text-xs font-bold divide-x divide-slate-100">
+                          <div className="px-2 text-center">
+                            <p className="text-[8px] font-black uppercase text-slate-400">Total Nota</p>
+                            <p className="text-sm font-black text-slate-800">{filteredWeighingHistory.length} <span className="text-[9px] text-slate-400 font-normal">Lembar</span></p>
                           </div>
-                          <div className="text-center border-r border-slate-200 pr-4">
-                            <p className="text-[8px] font-black uppercase text-slate-450">Berat (Total)</p>
-                            <p className="text-sm font-black text-emerald-700">
-                              {validActiveDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[9px] font-normal text-slate-400">KG</span>
-                            </p>
+                          <div className="pl-4 text-center">
+                            <p className="text-[8px] font-black uppercase text-slate-400">Total Ekor</p>
+                            <p className="text-sm font-black text-slate-800">{filteredWeighingHistory.reduce((s, r) => s + r.birds, 0).toLocaleString()} <span className="text-[9px] text-slate-400 font-normal">Ekr</span></p>
                           </div>
-                          <div className="text-center">
-                            <p className="text-[8px] font-black uppercase text-slate-450">Rata-rata (kg)</p>
-                            <p className="text-sm font-black text-rose-700">
-                              {(() => {
-                                const totalB = validActiveDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0);
-                                const totalW = validActiveDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0);
-                                return totalB > 0 ? (totalW / totalB).toFixed(3) : '0.000';
-                              })()}
-                            </p>
+                          <div className="pl-4 text-center">
+                            <p className="text-[8px] font-black uppercase text-slate-400">Total Bobot Netto</p>
+                            <p className="text-sm font-black text-emerald-600">{filteredWeighingHistory.reduce((s, r) => s + r.totalWeight, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[9px] text-slate-400 font-normal">Kg</span></p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Metadata Form Fields Mimicking Photo layout */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-slate-300 p-4 bg-slate-50/20 rounded-md mb-6 text-[11px]">
-                        {/* Left Info Column */}
-                        <div className="space-y-2 border-r-0 md:border-r border-slate-200 md:pr-4">
-                          <div className="flex items-center gap-2">
-                            <span className="w-24 font-black text-slate-500 uppercase">Tanggal :</span>
-                            <input 
-                              type="date" 
-                              value={harvestDate} 
-                              onChange={(e) => setHarvestDate(e.target.value)} 
-                              className="bg-transparent font-black text-slate-850 border-none p-0 focus:ring-0 focus:outline-none"
-                            />
+                      {/* Weighing Sheets Table */}
+                      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead className="bg-slate-50 border-b border-slate-200 text-[9px] uppercase font-black tracking-widest text-slate-400">
+                              <tr>
+                                <th className="py-3.5 px-4 w-10 text-center">No</th>
+                                <th className="py-3.5 px-4">No. Nota &amp; SPB</th>
+                                <th className="py-3.5 px-4">Tanggal &amp; Umur</th>
+                                <th className="py-3.5 px-4">Pembeli &amp; Sopir</th>
+                                <th className="py-3.5 px-4 text-right">Ekor</th>
+                                <th className="py-3.5 px-4 text-right">Total Netto</th>
+                                <th className="py-3.5 px-4 text-right">Rerata</th>
+                                <th className="py-3.5 px-4 text-center">Detail Draft</th>
+                                <th className="py-3.5 px-4 text-center">Aksi</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 font-medium">
+                              {filteredWeighingHistory.length === 0 ? (
+                                <tr>
+                                  <td colSpan={9} className="py-12 text-center text-slate-400 font-bold">
+                                    {weighingSearch ? 'Tidak ada riwayat timbangan yang cocok dengan pencarian.' : 'Belum ada data lembar timbangan yang tersimpan.'}
+                                  </td>
+                                </tr>
+                              ) : (
+                                filteredWeighingHistory.map((record, index) => (
+                                  <tr key={record.id} className="hover:bg-slate-50/80 transition-colors">
+                                    <td className="py-3.5 px-4 text-center font-bold text-slate-400 text-[10px]">
+                                      {index + 1}
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                      <div className="flex flex-col">
+                                        <span className="font-mono font-black text-slate-800 text-xs">
+                                          {record.dataTimbangNo || 'PFL-MANUAL'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 font-semibold">
+                                          SPB: {record.spbNo || '-'}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="py-3.5 px-4 whitespace-nowrap">
+                                      <div className="flex flex-col">
+                                        <span className="font-bold text-slate-700">{record.date}</span>
+                                        <span className="text-[10px] font-black text-emerald-600">Hari ke-{record.age}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                      <div className="flex flex-col">
+                                        <span className="font-bold text-slate-800">{record.takenBy || '-'}</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">
+                                          Sopir: {record.driverName || '-'} {record.plateNo ? `(${record.plateNo})` : ''}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800 whitespace-nowrap">
+                                      {record.birds.toLocaleString()} <span className="text-[9px] text-slate-400 font-normal">ekr</span>
+                                    </td>
+                                    <td className="py-3.5 px-4 text-right font-mono font-black text-emerald-600 whitespace-nowrap">
+                                      {record.totalWeight.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[9px] text-slate-400 font-normal">kg</span>
+                                    </td>
+                                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800 whitespace-nowrap">
+                                      {record.avgWeight.toFixed(3)} <span className="text-[9px] text-slate-400 font-normal">kg</span>
+                                    </td>
+                                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                      <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded text-[10px] font-mono font-extrabold">
+                                        <FileText size={10} /> {record.weighingDrafts?.length || 0} Baris
+                                      </span>
+                                    </td>
+                                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                      <div className="flex items-center justify-center gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleLoadWeighingRecord(record)}
+                                          title="Muat ke Lembar Kerja Timbang"
+                                          className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors font-bold text-[10px] flex items-center gap-1 cursor-pointer"
+                                        >
+                                          <RefreshCcw size={11} />
+                                          <span>Muat</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedRecordDrafts(record)}
+                                          title="Lihat Detail & Nota Timbang"
+                                          className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors font-bold text-[10px] flex items-center gap-1 cursor-pointer"
+                                        >
+                                          <FileText size={11} />
+                                          <span>Nota</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => deleteHarvestRecord(record.id)}
+                                          title="Hapus Record"
+                                          className="p-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                                        >
+                                          <Trash2 size={11} />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Interactive Paper Sheet Representation mimicking picture */
+                    <div className="flex-1 overflow-auto bg-slate-50/50 p-6 scrollbar-thin">
+                      <div 
+                        id="print-only-weighing-sheet"
+                        className="max-w-4xl mx-auto bg-white border border-slate-300 rounded-lg p-6 font-sans text-slate-800 shadow-md relative group/paper bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:16px_16px]"
+                      >
+                        {/* Paper Watermark Stamp style */}
+                        <div className="absolute right-4 top-16 border-2 border-dashed border-emerald-600/20 text-emerald-600/20 px-4 py-1 rounded text-2xl font-black uppercase tracking-widest pointer-events-none select-none transform rotate-12">
+                          Digital Twin
+                        </div>
+
+                        {/* Header Layout */}
+                        <div className="flex flex-col md:flex-row justify-between items-start border-b-2 border-slate-800 pb-4 mb-4 gap-4">
+                          <div>
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <h3 className="text-base font-black text-slate-900 tracking-wider">DATA TIMBANG NO :</h3>
+                              <input 
+                                type="text" 
+                                value={dataTimbangNo} 
+                                onChange={(e) => setDataTimbangNo(e.target.value)} 
+                                placeholder="Tulis No Nota"
+                                className="border-b-2 border-slate-300 focus:border-slate-800 bg-transparent text-sm font-mono font-black focus:outline-none w-44 px-1"
+                              />
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-xs font-black text-slate-500 tracking-wider">SPB NO :</span>
+                              <input 
+                                type="text" 
+                                value={spbNo} 
+                                onChange={(e) => setSpbNo(e.target.value)} 
+                                placeholder="Nomor SPB"
+                                className="border-b border-slate-300 focus:border-slate-800 bg-transparent text-xs font-mono font-bold focus:outline-none w-44 px-1"
+                              />
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-24 font-black text-slate-500 uppercase">Jam Tiba :</span>
-                            <div className="flex items-center gap-1.5 flex-1 max-w-xs">
-                              <Clock size={11} className="text-slate-400" />
+
+                          <div className="flex flex-wrap items-center gap-3 text-xs bg-slate-50 p-2.5 rounded border border-slate-200">
+                            <div className="flex items-center gap-1.5">
+                              <Clock size={12} className="text-slate-400" />
+                              <span className="font-bold text-[10px] uppercase text-slate-500">Datang:</span>
                               <input 
                                 type="text" 
                                 value={timeArrived} 
                                 onChange={(e) => setTimeArrived(e.target.value)} 
-                                placeholder="08:30"
-                                className="flex-1 bg-transparent border-b border-dashed border-slate-300 font-mono font-black py-0.5 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                                placeholder="00:00" 
+                                className="border-b border-dashed border-slate-300 w-12 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
                               />
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-24 font-black text-slate-500 uppercase">Jam Muat :</span>
-                            <div className="flex items-center gap-1.5 flex-1 max-w-xs">
-                              <Clock size={11} className="text-slate-400" />
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-[10px] uppercase text-slate-500">Muat:</span>
                               <input 
                                 type="text" 
                                 value={timeLoaded} 
                                 onChange={(e) => setTimeLoaded(e.target.value)} 
-                                placeholder="09:15"
-                                className="flex-1 bg-transparent border-b border-dashed border-slate-300 font-mono font-black py-0.5 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                                placeholder="00:00" 
+                                className="border-b border-dashed border-slate-300 w-12 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
                               />
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-24 font-black text-slate-500 uppercase">Jam Selesai :</span>
-                            <div className="flex items-center gap-1.5 flex-1 max-w-xs">
-                              <Clock size={11} className="text-slate-400" />
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-[10px] uppercase text-slate-500">Selesai:</span>
                               <input 
                                 type="text" 
                                 value={timeCompleted} 
                                 onChange={(e) => setTimeCompleted(e.target.value)} 
-                                placeholder="11:45"
-                                className="flex-1 bg-transparent border-b border-dashed border-slate-300 font-mono font-black py-0.5 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                                placeholder="00:00" 
+                                className="border-b border-dashed border-slate-300 w-12 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
                               />
                             </div>
                           </div>
                         </div>
-                        
-                        {/* Right Info Column */}
-                        <div className="space-y-2 md:pl-4">
-                          <div className="flex items-center gap-2">
-                            <span className="w-28 font-black text-slate-500 uppercase">Diambil Oleh :</span>
+
+                        {/* Metadata Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-xs mb-6 bg-slate-50/80 p-3 rounded border border-slate-200">
+                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">DIAMBIL OLEH :</span>
                             <input 
                               type="text" 
                               value={takenBy} 
                               onChange={(e) => setTakenBy(e.target.value)} 
-                              placeholder="Nama Pembeli / Broker"
-                              className="flex-1 bg-transparent border-b border-dashed border-slate-300 font-black text-slate-850 py-0.5 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                              placeholder="Nama Pembeli / PT"
+                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-48 text-xs"
                             />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-28 font-black text-slate-500 uppercase">Nama Sopir :</span>
+                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">TANGGAL :</span>
+                            <input 
+                              type="date" 
+                              value={harvestDate} 
+                              onChange={(e) => setHarvestDate(e.target.value)} 
+                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-36 text-xs"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">NAMA SOPIR :</span>
                             <input 
                               type="text" 
                               value={driverName} 
                               onChange={(e) => setDriverName(e.target.value)} 
-                              placeholder="Tulis nama sopir"
-                              className="flex-1 bg-transparent border-b border-dashed border-slate-300 font-black text-slate-850 py-0.5 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                              placeholder="Nama Sopir"
+                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-48 text-xs"
                             />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-28 font-black text-slate-500 uppercase">No. Polisi :</span>
+                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">NO. MOBIL :</span>
                             <input 
                               type="text" 
                               value={plateNo} 
                               onChange={(e) => setPlateNo(e.target.value)} 
-                              placeholder="AD 8741 XY"
-                              className="bg-transparent border-b border-dashed border-slate-300 font-mono font-black w-36 py-0.5 text-slate-850 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                              placeholder="B 1234 XYZ"
+                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono font-black text-slate-900 focus:outline-none w-36 text-xs uppercase"
                             />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-28 font-black text-slate-500 uppercase">No. SIM :</span>
+                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">SIM SOPIR :</span>
                             <input 
                               type="text" 
                               value={driverSim} 
                               onChange={(e) => setDriverSim(e.target.value)} 
-                              placeholder="Tulis SIM Sopir"
-                              className="bg-transparent border-b border-dashed border-slate-300 font-mono font-black w-36 py-0.5 text-slate-850 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                              placeholder="No. SIM"
+                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono text-slate-900 focus:outline-none w-48 text-xs"
                             />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-28 font-black text-slate-500 uppercase">No. STNK :</span>
+                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">STNK :</span>
                             <input 
                               type="text" 
                               value={stnkNo} 
                               onChange={(e) => setStnkNo(e.target.value)} 
-                              placeholder="Tulis STNK Kendaraan"
-                              className="bg-transparent border-b border-dashed border-slate-300 font-mono font-black w-36 py-0.5 text-slate-850 focus:border-slate-500 focus:ring-0 focus:outline-none text-slate-800"
+                              placeholder="No. STNK"
+                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono text-slate-900 focus:outline-none w-36 text-xs"
                             />
                           </div>
                         </div>
-                      </div>
 
-                      {/* Giant Weighing Grid Table */}
-                      <div className="overflow-x-auto border-2 border-slate-850 rounded">
-                        <table className="w-full min-w-[950px] border-collapse text-center font-mono text-xs bg-white">
-                          <thead>
-                            <tr className="bg-slate-100 border-b-2 border-slate-800 text-[11px]">
-                              <th className="py-3 px-1 border-r-2 border-slate-800 font-black text-center w-10 bg-slate-100" rowSpan={2}>No</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 text-center uppercase font-black text-xs" colSpan={2}>Kolom Timbang 1</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 text-center uppercase font-black text-xs" colSpan={2}>Kolom Timbang 2</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 text-center uppercase font-black text-xs" colSpan={2}>Kolom Timbang 3</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 text-center uppercase font-black text-xs" colSpan={2}>Kolom Timbang 4</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 text-center uppercase font-black text-xs" colSpan={2}>Kolom Timbang 5</th>
-                              <th className="py-1.5 border-slate-800 text-center uppercase font-black text-xs" colSpan={2}>Kolom Timbang 6</th>
-                            </tr>
-                            <tr className="bg-slate-50 border-b-2 border-slate-800 text-[10px] font-black">
-                              <th className="py-1.5 border-r border-slate-300 w-[7%]">Ekr</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 w-[9%] text-emerald-800">Kg (Net)</th>
-                              <th className="py-1.5 border-r border-slate-300 w-[7%]">Ekr</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 w-[9%] text-emerald-800">Kg (Net)</th>
-                              <th className="py-1.5 border-r border-slate-300 w-[7%]">Ekr</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 w-[9%] text-emerald-800">Kg (Net)</th>
-                              <th className="py-1.5 border-r border-slate-300 w-[7%]">Ekr</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 w-[9%] text-emerald-800">Kg (Net)</th>
-                              <th className="py-1.5 border-r border-slate-300 w-[7%]">Ekr</th>
-                              <th className="py-1.5 border-r-2 border-slate-800 w-[9%] text-emerald-800">Kg (Net)</th>
-                              <th className="py-1.5 border-r border-slate-300 w-[7%]">Ekr</th>
-                              <th className="py-1.5 border-slate-800 w-[9%] text-emerald-800">Kg (Net)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Array.from({ length: 15 }).map((_, r) => (
-                              <tr key={r} className="border-b border-slate-200 hover:bg-slate-50/70">
-                                <td className="py-1 border-r-2 border-slate-800 font-black bg-slate-50/50 text-slate-500 font-mono text-[10px]">{r + 1}</td>
+                        {/* Interactive Grid Table representation */}
+                        <div className="border-2 border-slate-800 rounded overflow-hidden mb-6 shadow-2xs">
+                          <table className="w-full text-center border-collapse text-xs font-mono">
+                            <thead>
+                              <tr className="bg-slate-800 text-white font-black text-[10px] uppercase tracking-wider">
+                                <th className="py-2 border-r border-slate-700 w-8">NO</th>
+                                {Array.from({ length: 6 }).map((_, c) => (
+                                  <React.Fragment key={c}>
+                                    <th className="py-2 border-r border-slate-700 w-12">EKR</th>
+                                    <th className={`py-2 ${c < 5 ? 'border-r-2 border-slate-600' : ''} bg-emerald-950/80 text-emerald-300`}>KG</th>
+                                  </React.Fragment>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-300 font-bold">
+                              {Array.from({ length: 15 }).map((_, rowIdx) => (
+                                <tr key={rowIdx} className="hover:bg-amber-50/40 transition-colors">
+                                  <td className="py-1.5 bg-slate-100 border-r-2 border-slate-800 text-[10px] font-black text-slate-500">
+                                    {rowIdx + 1}
+                                  </td>
+                                  {Array.from({ length: 6 }).map((_, colIdx) => {
+                                    const idx = colIdx * 15 + rowIdx;
+                                    const draft = activeDrafts[idx];
+                                    return (
+                                      <React.Fragment key={colIdx}>
+                                        <td className="p-0 border-r border-slate-300 bg-white hover:bg-slate-50">
+                                          <input 
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={draft?.birds === 0 || draft?.birds === '' ? '' : draft?.birds}
+                                            onChange={(e) => handleCellChange(idx, 'birds', e.target.value)}
+                                            placeholder="-"
+                                            className="w-full bg-transparent border-none text-center font-mono font-bold text-slate-800 text-[13px] md:text-sm py-2 px-1 focus:bg-amber-50 focus:ring-1 focus:ring-amber-300 focus:outline-none cursor-pointer"
+                                          />
+                                        </td>
+                                        <td className={`p-0 ${colIdx < 5 ? 'border-r-2 border-slate-800' : ''} bg-emerald-50/30 hover:bg-emerald-50/70`}>
+                                          <input 
+                                            type="text"
+                                            inputMode="decimal"
+                                            value={draft?.weight === 0 || draft?.weight === '' ? '' : draft?.weight}
+                                            onChange={(e) => handleCellChange(idx, 'weight', e.target.value)}
+                                            placeholder="-"
+                                            className="w-full bg-transparent border-none text-center font-mono font-black text-emerald-700 text-[13px] md:text-sm py-2 px-1 focus:bg-amber-50 focus:ring-1 focus:ring-amber-300 focus:outline-none cursor-pointer"
+                                          />
+                                        </td>
+                                      </React.Fragment>
+                                    );
+                                  })}
+                                </tr>
+                              ))}
+                              {/* Programmatic Totals Row per Column pair */}
+                              <tr className="bg-slate-100 border-t-2 border-slate-800 font-black text-xs">
+                                <td className="py-2.5 border-r-2 border-slate-800 font-black uppercase text-center bg-slate-100">TTL</td>
                                 {Array.from({ length: 6 }).map((_, c) => {
-                                  const idx = c * 15 + r;
-                                  const draft = activeDrafts[idx];
+                                  const colDrafts = activeDrafts.slice(c * 15, (c + 1) * 15);
+                                  const validColDrafts = colDrafts.filter(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
+                                  const totalCColBirds = validColDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0);
+                                  const totalCColWeight = validColDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0);
                                   return (
                                     <React.Fragment key={c}>
-                                      {/* Ekr Cell */}
-                                      <td className="p-0 border-r border-slate-200 col-ekor">
-                                        <input 
-                                          type="number"
-                                          value={draft?.birds === 0 || draft?.birds === '' ? '' : draft?.birds}
-                                          onChange={(e) => handleCellChange(idx, 'birds', e.target.value)}
-                                          placeholder="-"
-                                          className="w-full bg-transparent border-none text-center font-bold font-mono text-[13px] md:text-sm py-2 px-1 focus:bg-amber-50 focus:ring-1 focus:ring-amber-300 focus:outline-none cursor-pointer"
-                                        />
-                                      </td>
-                                      {/* Kg Cell */}
-                                      <td className={`p-0 ${c < 5 ? 'border-r-2 border-slate-800' : ''} col-kg`}>
-                                        <input 
-                                          type="text"
-                                          inputMode="decimal"
-                                          value={draft?.weight === 0 || draft?.weight === '' ? '' : draft?.weight}
-                                          onChange={(e) => handleCellChange(idx, 'weight', e.target.value)}
-                                          placeholder="-"
-                                          className="w-full bg-transparent border-none text-center font-mono font-black text-emerald-700 text-[13px] md:text-sm py-2 px-1 focus:bg-amber-50 focus:ring-1 focus:ring-amber-300 focus:outline-none cursor-pointer"
-                                        />
+                                      <td className="py-2.5 border-r border-slate-200 bg-slate-100/50 text-slate-800 font-black text-[12px]">{totalCColBirds || '-'}</td>
+                                      <td className={`py-2.5 ${c < 5 ? 'border-r-2 border-slate-800' : ''} bg-slate-100/50 text-emerald-700 font-black font-mono text-[12px]`}>
+                                        {totalCColWeight ? totalCColWeight.toFixed(2) : '-'}
                                       </td>
                                     </React.Fragment>
                                   );
                                 })}
                               </tr>
-                            ))}
-                            {/* Programmatic Totals Row per Column pair */}
-                            <tr className="bg-slate-100 border-t-2 border-slate-800 font-black text-xs">
-                              <td className="py-2.5 border-r-2 border-slate-800 font-black uppercase text-center bg-slate-100">TTL</td>
-                              {Array.from({ length: 6 }).map((_, c) => {
-                                const colDrafts = activeDrafts.slice(c * 15, (c + 1) * 15);
-                                const validColDrafts = colDrafts.filter(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
-                                const totalCColBirds = validColDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0);
-                                const totalCColWeight = validColDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0);
-                                return (
-                                  <React.Fragment key={c}>
-                                    <td className="py-2.5 border-r border-slate-200 bg-slate-100/50 text-slate-800 font-black text-[12px]">{totalCColBirds || '-'}</td>
-                                    <td className={`py-2.5 ${c < 5 ? 'border-r-2 border-slate-800' : ''} bg-slate-100/50 text-emerald-700 font-black font-mono text-[12px]`}>
-                                      {totalCColWeight ? totalCColWeight.toFixed(2) : '-'}
-                                    </td>
-                                  </React.Fragment>
-                                );
-                              })}
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
+                            </tbody>
+                          </table>
+                        </div>
 
-                      {/* Paper footer block mimicking driver, farm rep and receiver signature spots */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 pt-4 border-t border-slate-350 text-[10px] bg-slate-50/50 p-4 rounded border border-slate-200">
-                        {/* Diambil Oleh Column */}
-                        <div className="flex flex-col justify-between h-36 border-b md:border-b-0 pb-4 md:pb-0 text-center md:border-r border-slate-200 md:pr-4">
-                          <div className="space-y-1">
-                            <p className="font-black text-slate-700 uppercase tracking-wide">Diambil Oleh :</p>
-                            <span className="text-[9px] font-bold text-slate-400 block italic leading-tight">Merah: Pengambilan barang / Customer</span>
-                          </div>
-                          <div className="space-y-1 bg-white p-2 rounded border border-slate-200/50">
-                            <div className="flex justify-center items-center gap-1.5">
-                              <span className="text-slate-450 font-bold uppercase text-[7.5px]">Nama:</span>
-                              <input 
-                                type="text" 
-                                value={diambilNama} 
-                                onChange={(e) => setDiambilNama(e.target.value)} 
-                                placeholder="Nama Sopir/Kernet"
-                                className="border-b border-dashed border-slate-300 bg-transparent text-center font-bold text-xs focus:outline-none w-32 text-slate-800 py-0.5 opacity-90"
-                              />
+                        {/* Paper footer block mimicking driver, farm rep and receiver signature spots */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 pt-4 border-t border-slate-350 text-[10px] bg-slate-50/50 p-4 rounded border border-slate-200">
+                          {/* Diambil Oleh Column */}
+                          <div className="flex flex-col justify-between h-36 border-b md:border-b-0 pb-4 md:pb-0 text-center md:border-r border-slate-200 md:pr-4">
+                            <div className="space-y-1">
+                              <p className="font-black text-slate-700 uppercase tracking-wide">Diambil Oleh :</p>
+                              <span className="text-[9px] font-bold text-slate-400 block italic leading-tight">Merah: Pengambilan barang / Customer</span>
                             </div>
-                            <div className="flex justify-center items-center gap-1.5">
-                              <span className="text-slate-450 font-bold uppercase text-[7.5px]">Tgl/Jam:</span>
-                              <input 
-                                type="text" 
-                                value={diambilTgl} 
-                                onChange={(e) => setDiambilTgl(e.target.value)} 
-                                placeholder="Tanggal"
-                                className="border-b border-dashed border-slate-300 bg-transparent text-center font-mono focus:outline-none w-32 text-slate-800 py-0.5 text-[10px]"
-                              />
+                            <div className="space-y-1 bg-white p-2 rounded border border-slate-200/50">
+                              <div className="flex justify-center items-center gap-1.5">
+                                <span className="text-slate-450 font-bold uppercase text-[7.5px]">Nama:</span>
+                                <input 
+                                  type="text" 
+                                  value={diambilNama} 
+                                  onChange={(e) => setDiambilNama(e.target.value)} 
+                                  placeholder="Nama Sopir/Kernet"
+                                  className="border-b border-dashed border-slate-300 bg-transparent text-center font-bold text-xs focus:outline-none w-32 text-slate-800 py-0.5 opacity-90"
+                                />
+                              </div>
+                              <div className="flex justify-center items-center gap-1.5">
+                                <span className="text-slate-450 font-bold uppercase text-[7.5px]">Tgl/Jam:</span>
+                                <input 
+                                  type="text" 
+                                  value={diambilTgl} 
+                                  onChange={(e) => setDiambilTgl(e.target.value)} 
+                                  placeholder="Tanggal"
+                                  className="border-b border-dashed border-slate-300 bg-transparent text-center font-mono focus:outline-none w-32 text-slate-800 py-0.5 text-[10px]"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Check Security Column */}
+                          <div className="flex flex-col justify-between h-36 text-center">
+                            <div className="space-y-1">
+                              <p className="font-black text-slate-700 uppercase tracking-wide">Check / Security :</p>
+                              <span className="text-[9px] font-bold text-slate-400 block italic leading-tight">Kuning: Pemberi barang / Farm</span>
+                            </div>
+                            <div className="space-y-1 bg-white p-2 rounded border border-slate-200/50">
+                              <div className="flex justify-center items-center gap-1.5">
+                                <span className="text-slate-450 font-bold uppercase text-[7.5px]">Nama:</span>
+                                <input 
+                                  type="text" 
+                                  value={securityNama} 
+                                  onChange={(e) => setSecurityNama(e.target.value)} 
+                                  placeholder="Check / Security"
+                                  className="border-b border-dashed border-slate-300 bg-transparent text-center font-bold text-xs focus:outline-none w-32 text-slate-800 py-0.5"
+                                />
+                              </div>
+                              <div className="flex justify-center items-center gap-1.5">
+                                <span className="text-slate-450 font-bold uppercase text-[7.5px]">Tgl/Jam:</span>
+                                <input 
+                                  type="text" 
+                                  value={securityTgl} 
+                                  onChange={(e) => setSecurityTgl(e.target.value)} 
+                                  placeholder="Tanggal"
+                                  className="border-b border-dashed border-slate-300 bg-transparent text-center font-mono focus:outline-none w-32 text-slate-800 py-0.5 text-[10px]"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Check Security Column */}
-                        <div className="flex flex-col justify-between h-36 text-center">
-                          <div className="space-y-1">
-                            <p className="font-black text-slate-700 uppercase tracking-wide">Check / Security :</p>
-                            <span className="text-[9px] font-bold text-slate-400 block italic leading-tight">Kuning: Pemberi barang / Farm</span>
+                        {/* Bottom Action Bar inside Paper Sheet */}
+                        <div className="mt-8 pt-4 border-t-2 border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                            <Info size={15} className="text-emerald-600 shrink-0" />
+                            <span>Selesai mengisi? Klik tombol di samping untuk menyimpan lembar timbangan ini ke Riwayat Timbangan &amp; Panen.</span>
                           </div>
-                          <div className="space-y-1 bg-white p-2 rounded border border-slate-200/50">
-                            <div className="flex justify-center items-center gap-1.5">
-                              <span className="text-slate-450 font-bold uppercase text-[7.5px]">Nama:</span>
-                              <input 
-                                type="text" 
-                                value={securityNama} 
-                                onChange={(e) => setSecurityNama(e.target.value)} 
-                                placeholder="Check / Security"
-                                className="border-b border-dashed border-slate-300 bg-transparent text-center font-bold text-xs focus:outline-none w-32 text-slate-800 py-0.5"
-                              />
-                            </div>
-                            <div className="flex justify-center items-center gap-1.5">
-                              <span className="text-slate-450 font-bold uppercase text-[7.5px]">Tgl/Jam:</span>
-                              <input 
-                                type="text" 
-                                value={securityTgl} 
-                                onChange={(e) => setSecurityTgl(e.target.value)} 
-                                placeholder="Tanggal"
-                                className="border-b border-dashed border-slate-300 bg-transparent text-center font-mono focus:outline-none w-32 text-slate-800 py-0.5 text-[10px]"
-                              />
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={saveWeighingSheet}
+                              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer"
+                            >
+                              <Save size={14} /> Simpan Data Lembar Timbangan
+                            </button>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )
                 ) : (
                   /* Original Harvest History Table and Logs */
                   <>
