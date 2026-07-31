@@ -620,6 +620,31 @@ export default function App() {
   const [harvestDate, setHarvestDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [harvestAge, setHarvestAge] = useState<string>('');
 
+  const handleHarvestDateChange = (newDateStr: string) => {
+    setHarvestDate(newDateStr);
+    const baseDate = docBaseDate || (dailyDate && dailyAge ? addDaysToDate(dailyDate, -((parseInt(dailyAge) || 1) - 1)) : null);
+    if (baseDate && newDateStr) {
+      const daysDiff = getDaysBetween(newDateStr, baseDate);
+      const calculatedAge = daysDiff + 1;
+      if (calculatedAge > 0) {
+        setHarvestAge(calculatedAge.toString());
+      } else {
+        setHarvestAge('1');
+        setHarvestDate(baseDate);
+      }
+    }
+  };
+
+  const handleHarvestAgeChange = (newAgeStr: string) => {
+    setHarvestAge(newAgeStr);
+    const baseDate = docBaseDate || (dailyDate && dailyAge ? addDaysToDate(dailyDate, -((parseInt(dailyAge) || 1) - 1)) : null);
+    if (baseDate && newAgeStr) {
+      const ageNum = parseInt(newAgeStr) || 1;
+      const calculatedDate = addDaysToDate(baseDate, ageNum - 1);
+      setHarvestDate(calculatedDate);
+    }
+  };
+
   // Weighing drafts state (Data Timbang Panen - fixed 90 entries table)
   const [activeDrafts, setActiveDrafts] = useState<WeighingDraftInput[]>(() => 
     Array.from({ length: 90 }, (_, i) => ({
@@ -764,11 +789,26 @@ export default function App() {
   const [customProjectionAdg, setCustomProjectionAdg] = useState<string>('');
   const [customProjectionFcr, setCustomProjectionFcr] = useState<string>('');
 
-  // Sync harvest age & weight with daily/main state if empty
+  // Sync harvest age & weight & date with base date / daily state
   useEffect(() => {
+    const baseDate = docBaseDate || (dailyDate && dailyAge ? addDaysToDate(dailyDate, -((parseInt(dailyAge) || 1) - 1)) : null);
+    if (baseDate) {
+      if (harvestDate) {
+        const daysDiff = getDaysBetween(harvestDate, baseDate);
+        const calculatedAge = daysDiff + 1;
+        if (calculatedAge > 0) {
+          setHarvestAge(calculatedAge.toString());
+        }
+      } else if (harvestAge) {
+        const ageNum = parseInt(harvestAge) || 1;
+        setHarvestDate(addDaysToDate(baseDate, ageNum - 1));
+      }
+    } else if (!harvestAge && (dailyAge || age)) {
+      setHarvestAge(dailyAge || age);
+    }
+
     const hasWeighings = activeDrafts.some(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
     if (hasWeighings) return; // Skip if scale calculator is active
-    if (!harvestAge && (dailyAge || age)) setHarvestAge(dailyAge || age);
     if (!harvestAvgWeight && dailyWeight) {
       setHarvestAvgWeight(dailyWeight);
       const b = parseFloat(harvestBirds) || 0;
@@ -777,7 +817,7 @@ export default function App() {
         setHarvestTotalWeight((b * aw / 1000).toFixed(2));
       }
     }
-  }, [age, harvestAge, dailyAge, dailyWeight, harvestAvgWeight, harvestBirds, activeDrafts]);
+  }, [docBaseDate, dailyDate, dailyAge, age, dailyWeight, harvestBirds, activeDrafts]);
 
   // Synchronize Daily Input Form with History
   useEffect(() => {
@@ -2225,10 +2265,10 @@ export default function App() {
 
                               {/* Feed Stock & Remaining Info Table */}
                               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-slate-50/20">
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto max-h-[360px] overflow-y-auto">
                                   <table className="w-full text-left border-collapse">
-                                    <thead>
-                                      <tr className="bg-slate-50/80 border-b border-slate-200">
+                                    <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 shadow-xs">
+                                      <tr>
                                         <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Hari</th>
                                         <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Tanggal</th>
                                         <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Konsumsi Harian</th>
@@ -2888,14 +2928,14 @@ export default function App() {
                         <input 
                           type="date" 
                           value={harvestDate} 
-                          onChange={(e) => setHarvestDate(e.target.value)} 
+                          onChange={(e) => handleHarvestDateChange(e.target.value)} 
                           className="w-full border border-slate-200 rounded-lg py-1 px-2.5 bg-slate-50/50 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs font-bold text-slate-800" 
                         />
                       </div>
                       
                       <AgePicker 
                         age={harvestAge} 
-                        onAgeChange={(newAge) => setHarvestAge(newAge)} 
+                        onAgeChange={(newAge) => handleHarvestAgeChange(newAge)} 
                         label="Umur Panen (Hari)" 
                       />
 
@@ -3437,12 +3477,19 @@ export default function App() {
                           </div>
                           <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
                             <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">TANGGAL :</span>
-                            <input 
-                              type="date" 
-                              value={harvestDate} 
-                              onChange={(e) => setHarvestDate(e.target.value)} 
-                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-36 text-xs"
-                            />
+                            <div className="flex items-center gap-1.5">
+                              <input 
+                                type="date" 
+                                value={harvestDate} 
+                                onChange={(e) => handleHarvestDateChange(e.target.value)} 
+                                className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-32 text-xs"
+                              />
+                              {harvestAge && (
+                                <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                                  H-{harvestAge}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
                             <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">NAMA SOPIR :</span>
@@ -4146,19 +4193,19 @@ export default function App() {
                   </div>
 
                   {/* Responsive Scrollable Container */}
-                  <div className="flex-1 overflow-y-auto">
+                  <div className="flex-1 max-h-[480px] min-h-[300px] overflow-y-auto overflow-x-auto border-t border-slate-100 shadow-inner">
                     {inventoryActiveTab === 'pakan' ? (
                       /* Feed Stock Actions Table */
                       <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50/50 text-[9px] uppercase font-black tracking-widest text-slate-400 sticky top-0 z-20 shadow-sm border-b border-slate-50">
+                        <thead className="bg-slate-100 text-[9px] uppercase font-black tracking-widest text-slate-500 sticky top-0 z-20 shadow-xs border-b border-slate-200">
                           <tr>
-                            <th className="py-4 px-6 w-12 text-center bg-slate-50/50">No</th>
-                            <th className="py-4 px-6 bg-slate-50/50">Tanggal</th>
-                            <th className="py-4 px-6 text-center bg-slate-50/50">Aliran</th>
-                            <th className="py-4 px-6 text-emerald-700 bg-slate-50/50">Stok (SAK)</th>
-                            <th className="py-4 px-6 bg-slate-50/50">Bobot (KG)</th>
-                            <th className="py-4 px-6 bg-slate-50/50">Merek/Jenis Pakan</th>
-                            <th className="py-4 px-6 text-right bg-slate-50/50">Aksi</th>
+                            <th className="py-4 px-6 w-12 text-center bg-slate-100">No</th>
+                            <th className="py-4 px-6 bg-slate-100">Tanggal</th>
+                            <th className="py-4 px-6 text-center bg-slate-100">Aliran</th>
+                            <th className="py-4 px-6 text-emerald-800 bg-slate-100">Stok (SAK)</th>
+                            <th className="py-4 px-6 bg-slate-100">Bobot (KG)</th>
+                            <th className="py-4 px-6 bg-slate-100">Merek/Jenis Pakan</th>
+                            <th className="py-4 px-6 text-right bg-slate-100">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="text-xs font-bold text-slate-650">
@@ -4205,17 +4252,17 @@ export default function App() {
                     ) : (
                       /* DOC Arrival Logistics log table */
                       <table className="w-full text-left border-collapse border-slate-50">
-                        <thead className="bg-slate-50 text-[9px] uppercase font-black tracking-widest text-slate-400 sticky top-0 z-20 shadow-sm">
+                        <thead className="bg-slate-100 text-[9px] uppercase font-black tracking-widest text-slate-500 sticky top-0 z-20 shadow-xs border-b border-slate-200">
                           <tr>
-                            <th className="py-4 px-6 w-12 text-center">No</th>
-                            <th className="py-4 px-6">Tanggal Tiba</th>
-                            <th className="py-4 px-6 text-blue-700">Hatchery / Asal</th>
-                            <th className="py-4 px-6">Bawaan (Box)</th>
-                            <th className="py-4 px-6">Total Populasi</th>
-                            <th className="py-4 px-6">Rerata Berat DOC</th>
-                            <th className="py-4 px-6">Kondisi Fisik</th>
-                            <th className="py-4 px-6">Catatan</th>
-                            <th className="py-4 px-6 text-right">Aksi</th>
+                            <th className="py-4 px-6 w-12 text-center bg-slate-100">No</th>
+                            <th className="py-4 px-6 bg-slate-100">Tanggal Tiba</th>
+                            <th className="py-4 px-6 text-blue-800 bg-slate-100">Hatchery / Asal</th>
+                            <th className="py-4 px-6 bg-slate-100">Bawaan (Box)</th>
+                            <th className="py-4 px-6 bg-slate-100">Total Populasi</th>
+                            <th className="py-4 px-6 bg-slate-100">Rerata Berat DOC</th>
+                            <th className="py-4 px-6 bg-slate-100">Kondisi Fisik</th>
+                            <th className="py-4 px-6 bg-slate-100">Catatan</th>
+                            <th className="py-4 px-6 text-right bg-slate-100">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="text-xs font-bold text-slate-650">
