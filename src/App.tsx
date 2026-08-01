@@ -3080,9 +3080,9 @@ export default function App() {
                       
                       {/* Summary Table directly in the Header for the Weighing Sheet */}
                       {weighingActiveTab === 'sheet' && (
-                        <div className="hidden xl:flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-lg max-w-xl text-[9px] font-mono leading-tight flex-1 mx-4">
+                        <div className="hidden lg:flex items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-mono leading-tight flex-1 mx-2 overflow-x-auto">
                           {headerTableData.map((col, idx) => (
-                            <div key={idx} className={`flex-1 px-1.5 py-0.5 text-center ${idx < 5 ? 'border-r border-slate-200' : ''}`}>
+                            <div key={idx} className={`flex-1 px-1.5 py-0.5 text-center min-w-[50px] ${idx < 5 ? 'border-r border-slate-200' : ''}`}>
                               <p className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{col.name}</p>
                               <div className="flex flex-col font-bold">
                                 <span className="text-slate-700 whitespace-nowrap">{col.birds || 0} ekr</span>
@@ -3090,14 +3090,14 @@ export default function App() {
                               </div>
                             </div>
                           ))}
-                          <div className="flex-1 px-1.5 py-0.5 text-center border-l-2 border-slate-300 bg-emerald-50/70 rounded">
-                            <p className="text-[7.5px] font-black text-emerald-800 uppercase tracking-widest leading-none mb-0.5">TOTAL</p>
+                          <div className="flex-1 px-2.5 py-1 text-center border-l-2 border-emerald-500 bg-emerald-50/90 rounded-md min-w-[130px] shadow-2xs">
+                            <p className="text-[7.5px] font-black text-emerald-800 uppercase tracking-widest leading-none mb-0.5">TOTAL TIMBANGAN</p>
                             <div className="flex flex-col font-black">
-                              <span className="text-slate-800 whitespace-nowrap">
-                                {validActiveDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0)} Ekr
+                              <span className="text-slate-900 whitespace-nowrap text-[10px]">
+                                {grandTotalBirds.toLocaleString()} Ekr | {grandTotalWeight.toFixed(2)} Kg
                               </span>
-                              <span className="text-emerald-800 whitespace-nowrap">
-                                {validActiveDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0).toFixed(2)} Kg
+                              <span className="text-emerald-800 whitespace-nowrap text-[9px]">
+                                Rerata: {grandAvgWeight.toFixed(3)} Kg/Ekr
                               </span>
                             </div>
                           </div>
@@ -3603,6 +3603,33 @@ export default function App() {
                               </tr>
                             </tbody>
                           </table>
+                        </div>
+
+                        {/* Grand Total Summary Box on Lembar Timbangan */}
+                        <div className="bg-emerald-50/90 border-2 border-emerald-800 rounded-lg p-3.5 mb-6 flex flex-wrap items-center justify-around gap-4 shadow-2xs font-mono">
+                          <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">TOTAL EKOR</span>
+                            <div className="flex items-baseline gap-1 mt-0.5">
+                              <span className="text-xl font-mono font-black text-slate-900">{grandTotalBirds.toLocaleString()}</span>
+                              <span className="text-xs font-bold text-slate-500">Ekor</span>
+                            </div>
+                          </div>
+                          <div className="h-9 w-0.5 bg-emerald-300/80 hidden sm:block"></div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">TOTAL BERAT (NETTO)</span>
+                            <div className="flex items-baseline gap-1 mt-0.5">
+                              <span className="text-xl font-mono font-black text-emerald-700">{grandTotalWeight.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-xs font-bold text-slate-500">Kg</span>
+                            </div>
+                          </div>
+                          <div className="h-9 w-0.5 bg-emerald-300/80 hidden sm:block"></div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">RATA-RATA BERAT</span>
+                            <div className="flex items-baseline gap-1 mt-0.5">
+                              <span className="text-xl font-mono font-black text-slate-900">{grandAvgWeight.toFixed(3)}</span>
+                              <span className="text-xs font-bold text-slate-500">Kg/Ekor</span>
+                            </div>
+                          </div>
                         </div>
 
                         {/* Paper footer block mimicking driver, farm rep and receiver signature spots */}
@@ -5233,7 +5260,7 @@ export default function App() {
                           </tr>
                           <tr>
                             <td><strong>SOPIR:</strong></td><td>${selectedRecordDrafts.driverName || '-'} / ${selectedRecordDrafts.plateNo || '-'}</td>
-                            <td><strong>TOTAL:</strong></td><td>${selectedRecordDrafts.birds.toLocaleString()} EKR (${selectedRecordDrafts.totalWeight.toFixed(2)} KG)</td>
+                            <td><strong>TOTAL & RERATA:</strong></td><td>${selectedRecordDrafts.birds.toLocaleString()} EKR (${selectedRecordDrafts.totalWeight.toFixed(2)} KG) | Rerata: ${selectedRecordDrafts.avgWeight.toFixed(3)} KG/Ekr</td>
                           </tr>
                         </table>
                         <h3 style="margin-top: 30px; border-bottom: 1px solid black; padding-bottom: 5px;">DRAFT TIMBANGAN:</h3>
