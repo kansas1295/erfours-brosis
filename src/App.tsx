@@ -646,9 +646,9 @@ export default function App() {
     }
   };
 
-  // Weighing drafts state (Data Timbang Panen - fixed 90 entries table)
+  // Weighing drafts state (Data Timbang Panen - 15 columns x 15 rows = 225 entries table)
   const [activeDrafts, setActiveDrafts] = useState<WeighingDraftInput[]>(() => 
-    Array.from({ length: 90 }, (_, i) => ({
+    Array.from({ length: 225 }, (_, i) => ({
       id: `draft-${i}`,
       birds: '',
       weight: ''
@@ -1821,7 +1821,7 @@ export default function App() {
   const hasWeighings = useMemo(() => validActiveDrafts.length > 0, [validActiveDrafts]);
 
   const headerTableData = useMemo(() => {
-    return Array.from({ length: 6 }).map((_, c) => {
+    return Array.from({ length: 15 }).map((_, c) => {
       const colDrafts = activeDrafts.slice(c * 15, (c + 1) * 15);
       const validColDrafts = colDrafts.filter(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
       const birds = validColDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0);
@@ -3012,7 +3012,7 @@ export default function App() {
                       {weighingActiveTab === 'sheet' && (
                         <div className="hidden lg:flex items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-mono leading-tight flex-1 mx-2 overflow-x-auto">
                           {headerTableData.map((col, idx) => (
-                            <div key={idx} className={`flex-1 px-1.5 py-0.5 text-center min-w-[50px] ${idx < 5 ? 'border-r border-slate-200' : ''}`}>
+                            <div key={idx} className={`flex-1 px-1.5 py-0.5 text-center min-w-[50px] ${idx < 14 ? 'border-r border-slate-200' : ''}`}>
                               <p className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{col.name}</p>
                               <div className="flex flex-col font-bold">
                                 <span className="text-slate-700 whitespace-nowrap">{col.birds || 0} ekr</span>
@@ -3417,146 +3417,16 @@ export default function App() {
                           </form>
                         </div>
 
-                        {/* Header Metadata Section */}
-                        <div className="flex flex-col md:flex-row justify-between items-start border-b-2 border-slate-800 pb-3 mb-4 gap-4">
-                          <div className="w-full md:w-auto">
-                            <div className="flex items-baseline gap-2 mb-1">
-                              <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-wider">DATA TIMBANG NO :</h3>
-                              <input 
-                                type="text" 
-                                value={dataTimbangNo} 
-                                onChange={(e) => setDataTimbangNo(e.target.value)} 
-                                placeholder="PFL 109282"
-                                className="border-b-2 border-slate-300 focus:border-slate-800 bg-transparent text-xs sm:text-sm font-mono font-black focus:outline-none w-44 px-1"
-                              />
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-xs font-black text-slate-500 tracking-wider">SPB NO :</span>
-                              <input 
-                                type="text" 
-                                value={spbNo} 
-                                onChange={(e) => setSpbNo(e.target.value)} 
-                                placeholder="Nomor SPB"
-                                className="border-b border-slate-300 focus:border-slate-800 bg-transparent text-xs font-mono font-bold focus:outline-none w-44 px-1"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-3 text-xs bg-slate-50 p-2.5 rounded border border-slate-200 w-full md:w-auto">
-                            <div className="flex items-center gap-1.5">
-                              <Clock size={12} className="text-slate-400" />
-                              <span className="font-bold text-[10px] uppercase text-slate-500">Datang:</span>
-                              <input 
-                                type="text" 
-                                value={timeArrived} 
-                                onChange={(e) => setTimeArrived(e.target.value)} 
-                                placeholder="00:00" 
-                                className="border-b border-dashed border-slate-300 w-12 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
-                              />
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-[10px] uppercase text-slate-500">Muat:</span>
-                              <input 
-                                type="text" 
-                                value={timeLoaded} 
-                                onChange={(e) => setTimeLoaded(e.target.value)} 
-                                placeholder="00:00" 
-                                className="border-b border-dashed border-slate-300 w-12 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
-                              />
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-[10px] uppercase text-slate-500">Selesai:</span>
-                              <input 
-                                type="text" 
-                                value={timeCompleted} 
-                                onChange={(e) => setTimeCompleted(e.target.value)} 
-                                placeholder="00:00" 
-                                className="border-b border-dashed border-slate-300 w-12 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Metadata Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-xs mb-6 bg-slate-50/80 p-3 rounded border border-slate-200">
-                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
-                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">DIAMBIL OLEH :</span>
-                            <input 
-                              type="text" 
-                              value={takenBy} 
-                              onChange={(e) => setTakenBy(e.target.value)} 
-                              placeholder="Nama Pembeli / PT"
-                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-48 text-xs"
-                            />
-                          </div>
-                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
-                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">TANGGAL :</span>
-                            <div className="flex items-center gap-1.5">
-                              <input 
-                                type="date" 
-                                value={harvestDate} 
-                                onChange={(e) => handleHarvestDateChange(e.target.value)} 
-                                className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-32 text-xs"
-                              />
-                              {harvestAge && (
-                                <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
-                                  H-{harvestAge}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
-                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">NAMA SOPIR :</span>
-                            <input 
-                              type="text" 
-                              value={driverName} 
-                              onChange={(e) => setDriverName(e.target.value)} 
-                              placeholder="Nama Sopir"
-                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-48 text-xs"
-                            />
-                          </div>
-                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
-                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">NO. MOBIL :</span>
-                            <input 
-                              type="text" 
-                              value={plateNo} 
-                              onChange={(e) => setPlateNo(e.target.value)} 
-                              placeholder="B 1234 XYZ"
-                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono font-black text-slate-900 focus:outline-none w-36 text-xs uppercase"
-                            />
-                          </div>
-                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
-                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">SIM SOPIR :</span>
-                            <input 
-                              type="text" 
-                              value={driverSim} 
-                              onChange={(e) => setDriverSim(e.target.value)} 
-                              placeholder="No. SIM"
-                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono text-slate-900 focus:outline-none w-48 text-xs"
-                            />
-                          </div>
-                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-1">
-                            <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">STNK :</span>
-                            <input 
-                              type="text" 
-                              value={stnkNo} 
-                              onChange={(e) => setStnkNo(e.target.value)} 
-                              placeholder="No. STNK"
-                              className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono text-slate-900 focus:outline-none w-36 text-xs"
-                            />
-                          </div>
-                        </div>
-
                         {/* Interactive Grid Table representation */}
                         <div className="border-2 border-slate-800 rounded-xl overflow-x-auto mb-6 shadow-2xs bg-white">
-                          <table className="w-full min-w-[640px] text-center border-collapse text-xs font-mono">
+                          <table className="w-full min-w-[1500px] text-center border-collapse text-xs font-mono">
                             <thead>
                               <tr className="bg-slate-900 text-white font-black text-[10px] uppercase tracking-wider">
-                                <th className="py-2.5 px-2 border-r border-slate-700 w-10 bg-slate-950">NO</th>
-                                {Array.from({ length: 6 }).map((_, c) => (
+                                <th className="sticky left-0 z-20 py-2.5 px-2 border-r border-slate-700 w-10 bg-slate-950 text-white">NO</th>
+                                {Array.from({ length: 15 }).map((_, c) => (
                                   <React.Fragment key={c}>
                                     <th className="py-2.5 px-1 border-r border-slate-700 w-12 text-slate-200">EKR</th>
-                                    <th className={`py-2.5 px-1 ${c < 5 ? 'border-r-2 border-slate-700' : ''} bg-emerald-900 text-emerald-300`}>KG</th>
+                                    <th className={`py-2.5 px-1 ${c < 14 ? 'border-r-2 border-slate-700' : ''} bg-emerald-900 text-emerald-300`}>KG</th>
                                   </React.Fragment>
                                 ))}
                               </tr>
@@ -3564,10 +3434,10 @@ export default function App() {
                             <tbody className="divide-y divide-slate-200 font-bold">
                               {Array.from({ length: 15 }).map((_, rowIdx) => (
                                 <tr key={rowIdx} className="hover:bg-amber-50/50 transition-colors">
-                                  <td className="py-1.5 bg-slate-100 border-r-2 border-slate-800 text-[10px] font-black text-slate-600">
+                                  <td className="sticky left-0 z-10 py-1.5 bg-slate-100 border-r-2 border-slate-800 text-[10px] font-black text-slate-600">
                                     {rowIdx + 1}
                                   </td>
-                                  {Array.from({ length: 6 }).map((_, colIdx) => {
+                                  {Array.from({ length: 15 }).map((_, colIdx) => {
                                     const idx = colIdx * 15 + rowIdx;
                                     const draft = activeDrafts[idx];
                                     return (
@@ -3582,7 +3452,7 @@ export default function App() {
                                             className="w-full bg-transparent border-none text-center font-mono font-bold text-slate-800 text-xs sm:text-sm py-1.5 px-1 focus:bg-amber-100 focus:ring-1 focus:ring-amber-400 focus:outline-none cursor-pointer"
                                           />
                                         </td>
-                                        <td className={`p-0 ${colIdx < 5 ? 'border-r-2 border-slate-800' : ''} bg-emerald-50/30 hover:bg-emerald-50/70`}>
+                                        <td className={`p-0 ${colIdx < 14 ? 'border-r-2 border-slate-800' : ''} bg-emerald-50/30 hover:bg-emerald-50/70`}>
                                           <input 
                                             type="text"
                                             inputMode="decimal"
@@ -3599,8 +3469,8 @@ export default function App() {
                               ))}
                               {/* Programmatic Totals Row per Column pair */}
                               <tr className="bg-slate-900 text-white border-t-2 border-slate-900 font-black text-xs">
-                                <td className="py-2.5 border-r-2 border-slate-700 font-black uppercase text-center bg-slate-950 text-amber-400 text-[11px]">TTL</td>
-                                {Array.from({ length: 6 }).map((_, c) => {
+                                <td className="sticky left-0 z-10 py-2.5 border-r-2 border-slate-700 font-black uppercase text-center bg-slate-950 text-amber-400 text-[11px]">TTL</td>
+                                {Array.from({ length: 15 }).map((_, c) => {
                                   const colDrafts = activeDrafts.slice(c * 15, (c + 1) * 15);
                                   const validColDrafts = colDrafts.filter(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
                                   const totalCColBirds = validColDrafts.reduce((sum, d) => sum + (parseInt(d.birds as any) || 0), 0);
@@ -3608,7 +3478,7 @@ export default function App() {
                                   return (
                                     <React.Fragment key={c}>
                                       <td className="py-2.5 border-r border-slate-700 bg-slate-900 text-white font-black text-[12px]">{totalCColBirds || '-'}</td>
-                                      <td className={`py-2.5 ${c < 5 ? 'border-r-2 border-slate-700' : ''} bg-emerald-950 text-emerald-300 font-black font-mono text-[12px]`}>
+                                      <td className={`py-2.5 ${c < 14 ? 'border-r-2 border-slate-700' : ''} bg-emerald-950 text-emerald-300 font-black font-mono text-[12px]`}>
                                         {totalCColWeight ? totalCColWeight.toFixed(2) : '-'}
                                       </td>
                                     </React.Fragment>
@@ -3640,6 +3510,130 @@ export default function App() {
                             <div className="flex items-baseline gap-1.5 mt-1">
                               <span className="text-2xl font-mono font-black text-amber-400">{grandAvgWeight.toFixed(3)}</span>
                               <span className="text-xs font-bold text-slate-400">Kg/Ekor</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Header & Metadata Section - Moved Below Totals */}
+                        <div className="bg-slate-50/90 border border-slate-200 rounded-xl p-3.5 mb-6 text-xs shadow-2xs">
+                          {/* Top Primary Info Strip: Diambil Oleh, No Timbang, No SPB */}
+                          <div className="bg-slate-900 text-white rounded-lg p-2.5 mb-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                              <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider shrink-0">DIAMBIL OLEH :</span>
+                              <input 
+                                type="text" 
+                                value={takenBy} 
+                                onChange={(e) => setTakenBy(e.target.value)} 
+                                placeholder="Nama Pembeli / PT"
+                                className="border-b border-dashed border-slate-600 bg-transparent font-bold text-white focus:outline-none w-full max-w-[220px] text-xs"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0">NO. TIMBANG :</span>
+                              <input 
+                                type="text" 
+                                value={dataTimbangNo} 
+                                onChange={(e) => setDataTimbangNo(e.target.value)} 
+                                placeholder="PFL 109282"
+                                className="border-b border-dashed border-slate-600 bg-transparent font-mono font-black text-emerald-400 focus:outline-none w-28 text-xs"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0">NO. SPB :</span>
+                              <input 
+                                type="text" 
+                                value={spbNo} 
+                                onChange={(e) => setSpbNo(e.target.value)} 
+                                placeholder="Nomor SPB"
+                                className="border-b border-dashed border-slate-600 bg-transparent font-mono font-bold text-slate-200 focus:outline-none w-28 text-xs"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                              <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">TANGGAL :</span>
+                              <div className="flex items-center gap-1">
+                                <input 
+                                  type="date" 
+                                  value={harvestDate} 
+                                  onChange={(e) => handleHarvestDateChange(e.target.value)} 
+                                  className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-28 text-xs"
+                                />
+                                {harvestAge && (
+                                  <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200 shrink-0">
+                                    H-{harvestAge}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                              <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">NAMA SOPIR :</span>
+                              <input 
+                                type="text" 
+                                value={driverName} 
+                                onChange={(e) => setDriverName(e.target.value)} 
+                                placeholder="Nama Sopir"
+                                className="border-b border-dashed border-slate-300 bg-transparent text-right font-bold text-slate-900 focus:outline-none w-36 text-xs"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                              <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">NO. MOBIL :</span>
+                              <input 
+                                type="text" 
+                                value={plateNo} 
+                                onChange={(e) => setPlateNo(e.target.value)} 
+                                placeholder="B 1234 XYZ"
+                                className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono font-black text-slate-900 focus:outline-none w-28 text-xs uppercase"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                              <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">SIM SOPIR :</span>
+                              <input 
+                                type="text" 
+                                value={driverSim} 
+                                onChange={(e) => setDriverSim(e.target.value)} 
+                                placeholder="No. SIM"
+                                className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono text-slate-900 focus:outline-none w-32 text-xs"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                              <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">STNK :</span>
+                              <input 
+                                type="text" 
+                                value={stnkNo} 
+                                onChange={(e) => setStnkNo(e.target.value)} 
+                                placeholder="No. STNK"
+                                className="border-b border-dashed border-slate-300 bg-transparent text-right font-mono text-slate-900 focus:outline-none w-32 text-xs"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                              <span className="font-black text-slate-500 uppercase tracking-wide text-[10px]">JAM (DATANG/MUAT/SELESAI) :</span>
+                              <div className="flex items-center gap-1">
+                                <input 
+                                  type="text" 
+                                  value={timeArrived} 
+                                  onChange={(e) => setTimeArrived(e.target.value)} 
+                                  placeholder="00:00" 
+                                  className="border-b border-dashed border-slate-300 w-10 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
+                                />
+                                <span className="text-slate-300">/</span>
+                                <input 
+                                  type="text" 
+                                  value={timeLoaded} 
+                                  onChange={(e) => setTimeLoaded(e.target.value)} 
+                                  placeholder="00:00" 
+                                  className="border-b border-dashed border-slate-300 w-10 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
+                                />
+                                <span className="text-slate-300">/</span>
+                                <input 
+                                  type="text" 
+                                  value={timeCompleted} 
+                                  onChange={(e) => setTimeCompleted(e.target.value)} 
+                                  placeholder="00:00" 
+                                  className="border-b border-dashed border-slate-300 w-10 text-center font-mono font-bold text-xs bg-transparent focus:outline-none"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -3734,7 +3728,7 @@ export default function App() {
                         <table className="w-full text-left border-collapse">
                           <thead className="bg-slate-900 text-[10px] uppercase font-black tracking-wider text-slate-300 sticky top-0 z-20 shadow-sm font-mono">
                             <tr>
-                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-950 w-12 text-center text-slate-400">NO</th>
+                              <th className="sticky left-0 z-30 py-3 px-4 border-b border-slate-800 bg-slate-950 w-12 text-center text-slate-400">NO</th>
                               <th className="py-3 px-4 border-b border-slate-800 bg-slate-900">TANGGAL</th>
                               <th className="py-3 px-4 border-b border-slate-800 bg-slate-900">UMUR</th>
                               <th className="py-3 px-4 border-b border-slate-800 bg-slate-900">JUMLAH EKOR</th>
@@ -3748,7 +3742,7 @@ export default function App() {
                             {harvestHistory.map((record, idx) => {
                               return (
                                 <tr key={record.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-4 px-6 text-center text-slate-400 font-mono text-[10px]">
+                                  <td className="sticky left-0 z-10 bg-white border-r border-slate-100 py-4 px-6 text-center text-slate-400 font-mono text-[10px]">
                                     {harvestHistory.length - idx}
                                   </td>
                                   <td className="py-4 px-6">
