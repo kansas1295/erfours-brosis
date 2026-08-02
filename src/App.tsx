@@ -188,6 +188,7 @@ export default function App() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showAndroidModal, setShowAndroidModal] = useState<boolean>(false);
   const [isWebAppInstalled, setIsWebAppInstalled] = useState<boolean>(false);
+  const [installOsTab, setInstallOsTab] = useState<'android' | 'iphone'>('android');
 
   useEffect(() => {
     const handleBeforePrompt = (e: any) => {
@@ -256,7 +257,7 @@ export default function App() {
   const [historySelectedWeek, setHistorySelectedWeek] = useState<number | 'all'>('all');
 
   // Daily Dashboard States
-  const [activeDailyChartTab, setActiveDailyChartTab] = useState<'feed' | 'growth'>('feed');
+  const [activeDailyChartTab, setActiveDailyChartTab] = useState<'growth' | 'feed' | 'deaths'>('growth');
   const [dailyTableSearch, setDailyTableSearch] = useState('');
   const [dailyTableWeekFilter, setDailyTableWeekFilter] = useState<number | 'all'>('all');
 
@@ -1850,81 +1851,129 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
       {/* Header */}
-      <header className="h-16 bg-emerald-800 text-white flex items-center justify-between px-8 shrink-0 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 flex items-center justify-center">
+      <header className="h-14 sm:h-16 bg-emerald-800 text-white flex items-center justify-between px-3 sm:px-6 shrink-0 shadow-md relative z-30">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
             <svg viewBox="0 0 40 40" className="w-full h-full drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 4L32 16L20 28L8 16L20 4Z" fill="#60a5fa" />
               <path d="M20 12L32 24L20 36L8 24L20 12Z" fill="#2563eb" fillOpacity="0.9" />
               <path d="M20 12L26 18L20 24L14 18L20 12Z" fill="white" fillOpacity="0.3" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold tracking-tight uppercase">Erfours brosis</h1>
+          <h1 className="text-sm sm:text-xl font-bold tracking-tight uppercase whitespace-nowrap">Erfours brosis</h1>
         </div>
         
-        <nav className="flex items-center bg-emerald-900/50 rounded-lg p-1">
+        {/* Desktop Header Nav */}
+        <nav className="hidden md:flex items-center bg-emerald-900/50 rounded-lg p-1">
           <button 
             type="button"
             onClick={() => setView('daily')}
-            className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'daily' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
+            className={`px-3 lg:px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'daily' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
           >
             Harian
           </button>
           <button 
             type="button"
             onClick={() => setView('inventory')}
-            className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'inventory' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
+            className={`px-3 lg:px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'inventory' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
           >
             Stok &amp; DOC
           </button>
           <button 
             type="button"
             onClick={() => setView('harvest')}
-            className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'harvest' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
+            className={`px-3 lg:px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'harvest' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
           >
             Panen
           </button>
           <button 
             type="button"
             onClick={() => setView('weighing')}
-            className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'weighing' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
+            className={`px-3 lg:px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'weighing' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
           >
             Lembar Timbang
           </button>
           <button 
             type="button"
             onClick={() => setView('cumulative')}
-            className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'cumulative' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
+            className={`px-3 lg:px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'cumulative' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
           >
             Indeks IP
           </button>
           <button 
             type="button"
             onClick={() => setView('history')}
-            className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'history' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
+            className={`px-3 lg:px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${view === 'history' ? 'bg-emerald-400 text-emerald-900 shadow-sm' : 'text-emerald-400 hover:text-white'}`}
           >
             Riwayat
           </button>
         </nav>
 
-        <div className="flex items-center gap-4 text-sm font-medium">
+        {/* Mobile Header Scroll Pill Bar */}
+        <div className="flex md:hidden items-center gap-1 overflow-x-auto no-scrollbar py-0.5 px-1 bg-emerald-900/60 rounded-lg max-w-[50vw]">
+          <button 
+            type="button" 
+            onClick={() => setView('daily')}
+            className={`px-2 py-1 rounded text-[9px] font-extrabold uppercase shrink-0 ${view === 'daily' ? 'bg-emerald-400 text-emerald-950 font-black' : 'text-emerald-300'}`}
+          >
+            Harian
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setView('inventory')}
+            className={`px-2 py-1 rounded text-[9px] font-extrabold uppercase shrink-0 ${view === 'inventory' ? 'bg-emerald-400 text-emerald-950 font-black' : 'text-emerald-300'}`}
+          >
+            Stok
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setView('harvest')}
+            className={`px-2 py-1 rounded text-[9px] font-extrabold uppercase shrink-0 ${view === 'harvest' ? 'bg-emerald-400 text-emerald-950 font-black' : 'text-emerald-300'}`}
+          >
+            Panen
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setView('weighing')}
+            className={`px-2 py-1 rounded text-[9px] font-extrabold uppercase shrink-0 ${view === 'weighing' ? 'bg-emerald-400 text-emerald-950 font-black' : 'text-emerald-300'}`}
+          >
+            Timbang
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setView('cumulative')}
+            className={`px-2 py-1 rounded text-[9px] font-extrabold uppercase shrink-0 ${view === 'cumulative' ? 'bg-emerald-400 text-emerald-950 font-black' : 'text-emerald-300'}`}
+          >
+            IP
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setView('history')}
+            className={`px-2 py-1 rounded text-[9px] font-extrabold uppercase shrink-0 ${view === 'history' ? 'bg-emerald-400 text-emerald-950 font-black' : 'text-emerald-300'}`}
+          >
+            Riwayat
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-4 text-sm font-medium">
           <button 
             onClick={() => setShowAndroidModal(true)}
-            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 border border-emerald-400 active:scale-95 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-emerald-900/30 transition-all cursor-pointer animate-pulse"
+            className="flex items-center gap-1 sm:gap-1.5 bg-emerald-500 hover:bg-emerald-600 border border-emerald-400 active:scale-95 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-emerald-900/30 transition-all cursor-pointer animate-pulse shrink-0 touch-manipulation"
           >
             <Smartphone size={13} className="animate-bounce" />
-            <span>ID: Android App</span>
+            <span className="hidden xs:inline sm:inline">Pasang App</span>
+            <span className="xs:hidden sm:hidden">App</span>
           </button>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2 text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 
             System Active
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-hidden">
+      {/* Main Content Container optimized for Mobile scrolling */}
+      <main className="flex-1 overflow-y-auto md:overflow-hidden pb-20 md:pb-0 min-h-0">
         <AnimatePresence mode="wait">
           {view === 'daily' ? (
             <motion.div 
@@ -2162,227 +2211,108 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Visualisasi Tren Harian Dashboard */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
+                    {/* Visualisasi Tren Harian Dashboard - Simplified */}
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4 mb-4">
                         <div>
-                          <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                            <BarChart3 size={16} className="text-emerald-500" />
+                          <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                            <BarChart3 size={16} className="text-emerald-600" />
                             Visualisasi Tren Harian
                           </h3>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Grafik interaktif performa pakan harian, kematian harian, berat badan, & sisa stok pakan</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Grafik harian performa pertumbuhan &amp; pakan broiler</p>
                         </div>
+
+                        {/* Simple 3-Tab Pill Selector */}
                         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start sm:self-auto">
                           <button
                             type="button"
-                            onClick={() => setActiveDailyChartTab('feed')}
-                            className={`px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${
-                              activeDailyChartTab === 'feed'
-                                ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
-                                : 'text-slate-500 hover:text-slate-800'
+                            onClick={() => setActiveDailyChartTab('growth')}
+                            className={`px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                              activeDailyChartTab === 'growth'
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            Pakan & Stok Pakan
+                            🌱 Berat (g)
                           </button>
                           <button
                             type="button"
-                            onClick={() => setActiveDailyChartTab('growth')}
-                            className={`px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${
-                              activeDailyChartTab === 'growth'
-                                ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
-                                : 'text-slate-500 hover:text-slate-800'
+                            onClick={() => setActiveDailyChartTab('feed')}
+                            className={`px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                              activeDailyChartTab === 'feed'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
-                            Berat & Kematian
+                            🌾 Pakan (kg)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveDailyChartTab('deaths')}
+                            className={`px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                              activeDailyChartTab === 'deaths'
+                                ? 'bg-rose-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            ⚠️ Kematian (ekor)
                           </button>
                         </div>
                       </div>
 
                       {filteredDailyDashboardData.length === 0 ? (
-                        <div className="h-60 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg bg-slate-50 p-6 text-center">
-                          <TrendingUp size={36} className="text-slate-300 mb-2 animate-bounce" />
+                        <div className="h-48 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg bg-slate-50 p-4 text-center">
+                          <TrendingUp size={32} className="text-slate-300 mb-2" />
                           <p className="text-[11px] font-black text-slate-500 uppercase tracking-tight">Belum Ada Data Tren</p>
-                          <p className="text-[10px] text-slate-400 font-bold max-w-xs mt-1 uppercase leading-tight">Simpan data harian pada form kiri terlebih dahulu untuk melihat visualisasi tren harian.</p>
+                          <p className="text-[10px] text-slate-400 font-bold max-w-xs mt-1 uppercase">Simpan data harian pada form untuk melihat visualisasi tren.</p>
                         </div>
                       ) : (
-                        <div className="h-[280px] w-full">
-                          {activeDailyChartTab === 'feed' ? (
-                            <div className="h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1.5">
-                              {/* 3 Widgets Statistics Summary Grid */}
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                {/* Current Feed Stock Widget */}
-                                <div className="bg-emerald-50/40 border border-emerald-100/60 rounded-xl p-3 flex items-center gap-3">
-                                  <div className="p-2 bg-emerald-100/80 text-emerald-800 rounded-lg shadow-2xs">
-                                    <Package size={14} className="stroke-[2.5]" />
-                                  </div>
-                                  <div>
-                                    <p className="text-[8px] font-black text-emerald-700 uppercase tracking-widest leading-none">Stok Saat Ini</p>
-                                    <p className="text-xs font-black text-slate-800 mt-1 leading-none">
-                                      {feedStatsSummary ? `${feedStatsSummary.currentStockSak.toFixed(2)} SAK` : '0.00 SAK'}
-                                    </p>
-                                    <p className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">
-                                      {feedStatsSummary ? `~${feedStatsSummary.currentStockKg.toLocaleString()} kg` : '0 kg'}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Average Consumption Widget */}
-                                <div className="bg-blue-50/40 border border-blue-100/60 rounded-xl p-3 flex items-center gap-3">
-                                  <div className="p-2 bg-blue-100/80 text-blue-800 rounded-lg shadow-2xs">
-                                    <Activity size={14} className="stroke-[2.5]" />
-                                  </div>
-                                  <div>
-                                    <p className="text-[8px] font-black text-blue-700 uppercase tracking-widest leading-none">Konsumsi Harian</p>
-                                    <p className="text-xs font-black text-slate-800 mt-1 leading-none">
-                                      {feedStatsSummary ? `${feedStatsSummary.avgDailyFeedSak.toFixed(2)} SAK` : '0.00 SAK'}
-                                    </p>
-                                    <p className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">
-                                      {feedStatsSummary ? `~${feedStatsSummary.avgDailyFeedKg.toFixed(1)} kg/hari` : '0 kg/hari'}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Estimated Lifespan Widget */}
-                                <div className="bg-amber-50/40 border border-amber-100/60 rounded-xl p-3 flex items-center gap-3">
-                                  <div className="p-2 bg-amber-100/80 text-amber-800 rounded-lg shadow-2xs">
-                                    <Clock size={14} className="stroke-[2.5]" />
-                                  </div>
-                                  <div>
-                                    <p className="text-[8px] font-black text-amber-700 uppercase tracking-widest leading-none">Ketahanan Stok</p>
-                                    <p className="text-xs font-black text-slate-800 mt-1 leading-none">
-                                      {feedStatsSummary && feedStatsSummary.currentStockSak > 0 
-                                        ? (feedStatsSummary.estimatedDaysLeft > 0 ? `~${feedStatsSummary.estimatedDaysLeft} Hari` : 'Stok Kritis') 
-                                        : 'Stok Habis'}
-                                    </p>
-                                    <p className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">
-                                      {feedStatsSummary && feedStatsSummary.currentStockSak > 0 && feedStatsSummary.estimatedDaysLeft > 0
-                                        ? 'Berdasarkan tren rata-rata' 
-                                        : 'Segera beli pakan'}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Feed Stock & Remaining Info Table */}
-                              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-slate-50/20">
-                                <div className="overflow-x-auto max-h-[360px] overflow-y-auto">
-                                  <table className="w-full text-left border-collapse">
-                                    <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 shadow-xs">
-                                      <tr>
-                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Hari</th>
-                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Tanggal</th>
-                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Konsumsi Harian</th>
-                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right">Sisa Stok</th>
-                                        <th className="py-2 px-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 bg-white">
-                                      {displayedDailyFeedStockTableData.length === 0 ? (
-                                        <tr>
-                                          <td colSpan={5} className="py-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-tight">
-                                            Tidak Ada Data Stok Pakan harian
-                                          </td>
-                                        </tr>
-                                      ) : (
-                                        displayedDailyFeedStockTableData.map((row) => (
-                                          <tr key={row.id + '-feed-stock-row'} className="hover:bg-slate-50/40 transition-colors">
-                                            <td className="py-2 px-3 text-center whitespace-nowrap">
-                                              <span className="inline-flex items-center justify-center bg-slate-100 text-slate-700 font-extrabold text-[9px] px-2 py-0.5 rounded-md">
-                                                Hari {row.age}
-                                              </span>
-                                            </td>
-                                            <td className="py-2 px-3 text-[10px] font-bold text-slate-600 whitespace-nowrap">
-                                              {row.formattedDate}
-                                            </td>
-                                            <td className="py-2 px-3 text-right whitespace-nowrap">
-                                              <div className="flex flex-col items-end">
-                                                <span className="text-[10px] font-extrabold text-slate-800">{row.dailyFeedSak.toFixed(2)} SAK</span>
-                                                <span className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">{row.dailyFeedKg.toLocaleString()} KG</span>
-                                              </div>
-                                            </td>
-                                            <td className="py-2 px-3 text-right whitespace-nowrap">
-                                              <div className="flex flex-col items-end">
-                                                <span className="text-[10px] font-black text-blue-600">{row.feedStockSak.toFixed(2)} SAK</span>
-                                                <span className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">{row.feedStockKg.toLocaleString()} KG</span>
-                                              </div>
-                                            </td>
-                                            <td className="py-2 px-3 text-center whitespace-nowrap">
-                                              {(() => {
-                                                const stock = row.feedStockSak;
-                                                if (stock <= 0) {
-                                                  return (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
-                                                      Habis
-                                                    </span>
-                                                  );
-                                                } else if (stock <= 5) {
-                                                  return (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-100">
-                                                      Kritis
-                                                    </span>
-                                                  );
-                                                } else if (stock <= 15) {
-                                                  return (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100">
-                                                      Menipis
-                                                    </span>
-                                                  );
-                                                } else {
-                                                  return (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                                      Aman
-                                                    </span>
-                                                  );
-                                                }
-                                              })()}
-                                            </td>
-                                          </tr>
-                                        ))
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <ComposedChart data={filteredDailyDashboardData}>
+                        <div className="h-[220px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            {activeDailyChartTab === 'growth' ? (
+                              <AreaChart data={filteredDailyDashboardData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                                <defs>
+                                  <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                  </linearGradient>
+                                </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                  dataKey="age" 
-                                  tickFormatter={(v) => `Hari ${v}`}
-                                  axisLine={false} 
-                                  tickLine={false} 
-                                  tick={{fontSize: 9, fill: '#64748b', fontWeight: 700}}
+                                <XAxis dataKey="age" tickFormatter={(v) => `H-${v}`} axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#64748b', fontWeight: 700}} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#10b981', fontWeight: 700}} />
+                                <Tooltip
+                                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 700 }}
+                                  formatter={(val: any) => [`${val.toLocaleString()} Gram`, 'Rata-rata Berat']}
+                                  labelFormatter={(label) => `Hari ke-${label}`}
                                 />
-                                <YAxis 
-                                  yAxisId="left"
-                                  axisLine={false}
-                                  tickLine={false}
-                                  tick={{fontSize: 9, fill: '#10b981', fontWeight: 700}}
-                                  label={{ value: 'Berat Badan (Gram)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 9, fill: '#10b981', fontWeight: 700 } }}
+                                <Area type="monotone" dataKey="avgWeightGr" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorWeight)" name="Berat Badan (Gram)" />
+                              </AreaChart>
+                            ) : activeDailyChartTab === 'feed' ? (
+                              <BarChart data={filteredDailyDashboardData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis dataKey="age" tickFormatter={(v) => `H-${v}`} axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#64748b', fontWeight: 700}} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#3b82f6', fontWeight: 700}} />
+                                <Tooltip
+                                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 700 }}
+                                  formatter={(val: any) => [`${val.toLocaleString()} KG (~${(val/50).toFixed(1)} SAK)`, 'Konsumsi Pakan']}
+                                  labelFormatter={(label) => `Hari ke-${label}`}
                                 />
-                                <YAxis 
-                                  yAxisId="right"
-                                  orientation="right"
-                                  axisLine={false}
-                                  tickLine={false}
-                                  tick={{fontSize: 9, fill: '#f43f5e', fontWeight: 700}}
-                                  label={{ value: 'Kematian (Ekor)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle', fontSize: 9, fill: '#f43f5e', fontWeight: 700 } }}
+                                <Bar dataKey="dailyFeedKg" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Pakan Harian (KG)" barSize={20} />
+                              </BarChart>
+                            ) : (
+                              <BarChart data={filteredDailyDashboardData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis dataKey="age" tickFormatter={(v) => `H-${v}`} axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#64748b', fontWeight: 700}} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#f43f5e', fontWeight: 700}} />
+                                <Tooltip
+                                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 700 }}
+                                  formatter={(val: any) => [`${val} Ekor`, 'Kematian']}
+                                  labelFormatter={(label) => `Hari ke-${label}`}
                                 />
-                                <Tooltip 
-                                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }}
-                                  formatter={(value: any, name: string) => {
-                                    if (name.includes("Berat")) return [`${value.toLocaleString()} g`, "Berat Rata-rata"];
-                                    return [`${value} Ekor`, "Kematian"];
-                                  }}
-                                />
-                                <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 700, marginTop: '5px' }} />
-                                <Bar yAxisId="right" dataKey="dailyDeaths" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Kematian Harian (Ekor)" barSize={24} />
-                                <Line yAxisId="left" type="monotone" dataKey="avgWeightGr" stroke="#10b981" strokeWidth={3} dot={{ r: 4, stroke: '#10b981', strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 7 }} name="Berat Badan (Gram)" />
-                              </ComposedChart>
-                            </ResponsiveContainer>
-                          )}
+                                <Bar dataKey="dailyDeaths" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Kematian (Ekor)" barSize={20} />
+                              </BarChart>
+                            )}
+                          </ResponsiveContainer>
                         </div>
                       )}
                     </div>
@@ -3183,58 +3113,43 @@ export default function App() {
                       >
                         <Download size={10} /> Export CSV
                       </button>
-                      <div className="flex items-center gap-6">
-                        <div className="flex flex-col">
-                          <p className="text-[8px] font-black text-slate-400 uppercase">Total Ekor</p>
-                          <p className="text-sm font-black text-slate-900">{harvestHistory.reduce((s, r) => s + r.birds, 0).toLocaleString()} <span className="text-[9px] text-slate-400 font-normal">EKOR</span></p>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 bg-slate-900 text-white p-2.5 sm:p-3 rounded-xl border border-slate-800 shadow-sm text-xs font-mono">
+                        <div className="flex flex-col px-2">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">TOTAL EKOR</span>
+                          <span className="text-sm font-black text-white">{harvestHistory.reduce((s, r) => s + r.birds, 0).toLocaleString()} <span className="text-[9px] text-slate-400 font-normal">EKOR</span></span>
                         </div>
-                        <div className="flex flex-col pl-4 border-l border-slate-100">
-                          <p className="text-[8px] font-black text-slate-400 uppercase">Total Bobot</p>
-                          <p className="text-sm font-black text-emerald-600">{harvestHistory.reduce((s, r) => s + r.totalWeight, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[9px] font-normal text-slate-400">KG</span></p>
+                        <div className="h-6 w-px bg-slate-800 hidden sm:block"></div>
+                        <div className="flex flex-col px-2">
+                          <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tight">TOTAL BOBOT</span>
+                          <span className="text-sm font-black text-emerald-400">{harvestHistory.reduce((s, r) => s + r.totalWeight, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[9px] text-emerald-500 font-normal">KG</span></span>
                         </div>
-                        {(() => {
-                          const withWeighings = harvestHistory.filter(r => r.weighingDrafts && r.weighingDrafts.length > 0);
-                          const ttlWeighingBirds = withWeighings.reduce((sum, r) => sum + (r.weighingDrafts?.reduce((s, d) => s + d.birds, 0) || 0), 0);
-                          const ttlWeighingKg = withWeighings.reduce((sum, r) => sum + (r.weighingDrafts?.reduce((s, d) => s + d.weight, 0) || 0), 0);
-                          
-                          if (withWeighings.length > 0) {
-                            return (
-                              <div className="flex flex-col border-l border-slate-100 pl-4">
-                                <p className="text-[8px] font-black text-blue-500 uppercase tracking-wider">Total Timbangan</p>
-                                <p className="text-sm font-black text-blue-600">
-                                  {ttlWeighingBirds.toLocaleString()} <span className="text-[9px] text-slate-400 font-bold">Ekor</span> / {ttlWeighingKg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[9px] font-bold text-slate-400">Kg</span>
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
-                        <div className="flex flex-col border-l border-slate-100 pl-4">
-                          <p className="text-[8px] font-black text-slate-400 uppercase">Rerata Bobot</p>
-                          <p className="text-xs font-black text-slate-900">
+                        <div className="h-6 w-px bg-slate-800 hidden sm:block"></div>
+                        <div className="flex flex-col px-2">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">RERATA BOBOT</span>
+                          <span className="text-xs font-black text-amber-400">
                             {(() => {
                               const totalB = harvestHistory.reduce((s, r) => s + r.birds, 0);
                               const totalW = harvestHistory.reduce((s, r) => s + r.totalWeight, 0);
                               return totalB > 0 ? (totalW / totalB).toFixed(3) : '0.000';
-                            })()}
-                            <span className="text-[8px] text-slate-400 ml-1 font-normal">KG</span>
-                          </p>
+                            })()} <span className="text-[8px] text-slate-400 font-normal">KG</span>
+                          </span>
                         </div>
-                        <div className="flex flex-col border-l border-slate-100 pl-4">
-                          <p className="text-[8px] font-black text-slate-400 uppercase">Rerata Umur Panen</p>
-                          <p className="text-xs font-black text-slate-900">
-                            {harvestHistory.length > 0 ? (harvestHistory.reduce((s, r) => s + r.age, 0) / harvestHistory.length).toFixed(1) : '0'}
-                            <span className="text-[8px] text-slate-400 ml-1 font-normal">HARI</span>
-                          </p>
+                        <div className="h-6 w-px bg-slate-800 hidden sm:block"></div>
+                        <div className="flex flex-col px-2">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">RERATA UMUR</span>
+                          <span className="text-xs font-black text-slate-200">
+                            {harvestHistory.length > 0 ? (harvestHistory.reduce((s, r) => s + r.age, 0) / harvestHistory.length).toFixed(1) : '0'} <span className="text-[8px] text-slate-400 font-normal">HARI</span>
+                          </span>
                         </div>
-                        <div className="flex flex-col border-l border-slate-100 pl-4">
-                          <p className="text-[8px] font-black text-slate-400 uppercase">Rerata IP Panen</p>
-                          <p className="text-xs font-black text-emerald-700">
+                        <div className="h-6 w-px bg-slate-800 hidden sm:block"></div>
+                        <div className="flex flex-col px-2">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">RERATA IP</span>
+                          <span className="text-xs font-black text-emerald-400">
                             {(() => {
                               const count = harvestHistory.length;
                               return count > 0 ? Math.round(harvestHistory.reduce((s, r) => s + r.ip, 0) / count).toLocaleString() : '0';
                             })()}
-                          </p>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -3403,17 +3318,116 @@ export default function App() {
                           Digital Twin
                         </div>
 
-                        {/* Header Layout */}
-                        <div className="flex flex-col md:flex-row justify-between items-start border-b-2 border-slate-800 pb-4 mb-4 gap-4">
-                          <div>
+                        {/* Title Header Banner for Kalkulator Timbang Panen Broiler */}
+                        <div className="bg-gradient-to-r from-emerald-800 via-emerald-900 to-slate-900 text-white p-3.5 sm:p-4 rounded-xl mb-4 shadow-sm border border-emerald-700/50 flex flex-col md:flex-row items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-500/20 border border-emerald-400/30 rounded-xl shrink-0">
+                              <Scale size={22} className="text-emerald-400" />
+                            </div>
+                            <div>
+                              <h2 className="text-sm sm:text-base font-black tracking-wide uppercase text-emerald-300">
+                                KALKULATOR TIMBANG PANEN BROILER
+                              </h2>
+                              <p className="text-[10px] sm:text-[11px] text-slate-300 font-medium">
+                                System Hitung Netto, Rerata &amp; Lembar Penimbangan Ayam Broiler Digital
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-md border border-emerald-700/60 font-mono">
+                              {validActiveDrafts.length} / 90 BARIS TERISI
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Quick Input Kalkulator Timbang Broiler Panel */}
+                        <div className="bg-emerald-50/90 border-2 border-emerald-600/60 rounded-xl p-3 sm:p-3.5 mb-5 shadow-2xs">
+                          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-emerald-200">
+                            <div className="flex items-center gap-1.5">
+                              <Calculator size={15} className="text-emerald-700" />
+                              <span className="text-xs font-black uppercase text-emerald-900 tracking-wider">
+                                Kalkulator Timbang Cepat (Bruto - Tara = Netto)
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-emerald-700 font-bold hidden sm:inline">
+                              Otomatis Masuk ke Baris {validActiveDrafts.length + 1}
+                            </span>
+                          </div>
+
+                          <form onSubmit={handleAddDraft} className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2.5 items-end">
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-700 uppercase tracking-tight mb-1">
+                                Ekor / Timbang
+                              </label>
+                              <div className="relative">
+                                <input 
+                                  type="number"
+                                  value={draftBirds}
+                                  onChange={(e) => setDraftBirds(e.target.value)}
+                                  placeholder="15"
+                                  className="w-full bg-white border border-slate-300 rounded-lg py-1.5 px-2.5 text-xs font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                                <span className="absolute right-2 top-2 text-[8px] font-black text-slate-400">EKR</span>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-700 uppercase tracking-tight mb-1">
+                                Berat Kotor (Bruto)
+                              </label>
+                              <div className="relative">
+                                <input 
+                                  id="draft-weight-input"
+                                  type="number"
+                                  step="0.01"
+                                  value={draftWeight}
+                                  onChange={(e) => setDraftWeight(e.target.value)}
+                                  placeholder="0.00"
+                                  className="w-full bg-white border border-slate-300 rounded-lg py-1.5 px-2.5 text-xs font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                                <span className="absolute right-2 top-2 text-[8px] font-black text-slate-400">KG</span>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-700 uppercase tracking-tight mb-1">
+                                Tara / Keranjang
+                              </label>
+                              <div className="relative">
+                                <input 
+                                  type="number"
+                                  step="0.01"
+                                  value={crateTare}
+                                  onChange={(e) => setCrateTare(e.target.value)}
+                                  placeholder="0.00"
+                                  className="w-full bg-white border border-slate-300 rounded-lg py-1.5 px-2.5 text-xs font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                                <span className="absolute right-2 top-2 text-[8px] font-black text-slate-400">KG</span>
+                              </div>
+                            </div>
+
+                            <div className="col-span-2 sm:col-span-1 lg:col-span-2 flex gap-2">
+                              <button
+                                type="submit"
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black py-2 px-3 rounded-lg text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                              >
+                                <Plus size={14} /> + Tambah Baris
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+
+                        {/* Header Metadata Section */}
+                        <div className="flex flex-col md:flex-row justify-between items-start border-b-2 border-slate-800 pb-3 mb-4 gap-4">
+                          <div className="w-full md:w-auto">
                             <div className="flex items-baseline gap-2 mb-1">
-                              <h3 className="text-base font-black text-slate-900 tracking-wider">DATA TIMBANG NO :</h3>
+                              <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-wider">DATA TIMBANG NO :</h3>
                               <input 
                                 type="text" 
                                 value={dataTimbangNo} 
                                 onChange={(e) => setDataTimbangNo(e.target.value)} 
-                                placeholder="Tulis No Nota"
-                                className="border-b-2 border-slate-300 focus:border-slate-800 bg-transparent text-sm font-mono font-black focus:outline-none w-44 px-1"
+                                placeholder="PFL 109282"
+                                className="border-b-2 border-slate-300 focus:border-slate-800 bg-transparent text-xs sm:text-sm font-mono font-black focus:outline-none w-44 px-1"
                               />
                             </div>
                             <div className="flex items-baseline gap-2">
@@ -3428,7 +3442,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-3 text-xs bg-slate-50 p-2.5 rounded border border-slate-200">
+                          <div className="flex flex-wrap items-center gap-3 text-xs bg-slate-50 p-2.5 rounded border border-slate-200 w-full md:w-auto">
                             <div className="flex items-center gap-1.5">
                               <Clock size={12} className="text-slate-400" />
                               <span className="font-bold text-[10px] uppercase text-slate-500">Datang:</span>
@@ -3534,23 +3548,23 @@ export default function App() {
                         </div>
 
                         {/* Interactive Grid Table representation */}
-                        <div className="border-2 border-slate-800 rounded overflow-hidden mb-6 shadow-2xs">
-                          <table className="w-full text-center border-collapse text-xs font-mono">
+                        <div className="border-2 border-slate-800 rounded-xl overflow-x-auto mb-6 shadow-2xs bg-white">
+                          <table className="w-full min-w-[640px] text-center border-collapse text-xs font-mono">
                             <thead>
-                              <tr className="bg-slate-800 text-white font-black text-[10px] uppercase tracking-wider">
-                                <th className="py-2 border-r border-slate-700 w-8">NO</th>
+                              <tr className="bg-slate-900 text-white font-black text-[10px] uppercase tracking-wider">
+                                <th className="py-2.5 px-2 border-r border-slate-700 w-10 bg-slate-950">NO</th>
                                 {Array.from({ length: 6 }).map((_, c) => (
                                   <React.Fragment key={c}>
-                                    <th className="py-2 border-r border-slate-700 w-12">EKR</th>
-                                    <th className={`py-2 ${c < 5 ? 'border-r-2 border-slate-600' : ''} bg-emerald-950/80 text-emerald-300`}>KG</th>
+                                    <th className="py-2.5 px-1 border-r border-slate-700 w-12 text-slate-200">EKR</th>
+                                    <th className={`py-2.5 px-1 ${c < 5 ? 'border-r-2 border-slate-700' : ''} bg-emerald-900 text-emerald-300`}>KG</th>
                                   </React.Fragment>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-300 font-bold">
+                            <tbody className="divide-y divide-slate-200 font-bold">
                               {Array.from({ length: 15 }).map((_, rowIdx) => (
-                                <tr key={rowIdx} className="hover:bg-amber-50/40 transition-colors">
-                                  <td className="py-1.5 bg-slate-100 border-r-2 border-slate-800 text-[10px] font-black text-slate-500">
+                                <tr key={rowIdx} className="hover:bg-amber-50/50 transition-colors">
+                                  <td className="py-1.5 bg-slate-100 border-r-2 border-slate-800 text-[10px] font-black text-slate-600">
                                     {rowIdx + 1}
                                   </td>
                                   {Array.from({ length: 6 }).map((_, colIdx) => {
@@ -3558,14 +3572,14 @@ export default function App() {
                                     const draft = activeDrafts[idx];
                                     return (
                                       <React.Fragment key={colIdx}>
-                                        <td className="p-0 border-r border-slate-300 bg-white hover:bg-slate-50">
+                                        <td className="p-0 border-r border-slate-200 bg-white hover:bg-slate-50">
                                           <input 
                                             type="text"
                                             inputMode="numeric"
                                             value={draft?.birds === 0 || draft?.birds === '' ? '' : draft?.birds}
                                             onChange={(e) => handleCellChange(idx, 'birds', e.target.value)}
                                             placeholder="-"
-                                            className="w-full bg-transparent border-none text-center font-mono font-bold text-slate-800 text-[13px] md:text-sm py-2 px-1 focus:bg-amber-50 focus:ring-1 focus:ring-amber-300 focus:outline-none cursor-pointer"
+                                            className="w-full bg-transparent border-none text-center font-mono font-bold text-slate-800 text-xs sm:text-sm py-1.5 px-1 focus:bg-amber-100 focus:ring-1 focus:ring-amber-400 focus:outline-none cursor-pointer"
                                           />
                                         </td>
                                         <td className={`p-0 ${colIdx < 5 ? 'border-r-2 border-slate-800' : ''} bg-emerald-50/30 hover:bg-emerald-50/70`}>
@@ -3575,7 +3589,7 @@ export default function App() {
                                             value={draft?.weight === 0 || draft?.weight === '' ? '' : draft?.weight}
                                             onChange={(e) => handleCellChange(idx, 'weight', e.target.value)}
                                             placeholder="-"
-                                            className="w-full bg-transparent border-none text-center font-mono font-black text-emerald-700 text-[13px] md:text-sm py-2 px-1 focus:bg-amber-50 focus:ring-1 focus:ring-amber-300 focus:outline-none cursor-pointer"
+                                            className="w-full bg-transparent border-none text-center font-mono font-black text-emerald-800 text-xs sm:text-sm py-1.5 px-1 focus:bg-amber-100 focus:ring-1 focus:ring-amber-400 focus:outline-none cursor-pointer"
                                           />
                                         </td>
                                       </React.Fragment>
@@ -3584,8 +3598,8 @@ export default function App() {
                                 </tr>
                               ))}
                               {/* Programmatic Totals Row per Column pair */}
-                              <tr className="bg-slate-100 border-t-2 border-slate-800 font-black text-xs">
-                                <td className="py-2.5 border-r-2 border-slate-800 font-black uppercase text-center bg-slate-100">TTL</td>
+                              <tr className="bg-slate-900 text-white border-t-2 border-slate-900 font-black text-xs">
+                                <td className="py-2.5 border-r-2 border-slate-700 font-black uppercase text-center bg-slate-950 text-amber-400 text-[11px]">TTL</td>
                                 {Array.from({ length: 6 }).map((_, c) => {
                                   const colDrafts = activeDrafts.slice(c * 15, (c + 1) * 15);
                                   const validColDrafts = colDrafts.filter(d => (parseInt(d.birds as any) || 0) > 0 && parseWeight(d.weight) > 0);
@@ -3593,8 +3607,8 @@ export default function App() {
                                   const totalCColWeight = validColDrafts.reduce((sum, d) => sum + parseWeight(d.weight), 0);
                                   return (
                                     <React.Fragment key={c}>
-                                      <td className="py-2.5 border-r border-slate-200 bg-slate-100/50 text-slate-800 font-black text-[12px]">{totalCColBirds || '-'}</td>
-                                      <td className={`py-2.5 ${c < 5 ? 'border-r-2 border-slate-800' : ''} bg-slate-100/50 text-emerald-700 font-black font-mono text-[12px]`}>
+                                      <td className="py-2.5 border-r border-slate-700 bg-slate-900 text-white font-black text-[12px]">{totalCColBirds || '-'}</td>
+                                      <td className={`py-2.5 ${c < 5 ? 'border-r-2 border-slate-700' : ''} bg-emerald-950 text-emerald-300 font-black font-mono text-[12px]`}>
                                         {totalCColWeight ? totalCColWeight.toFixed(2) : '-'}
                                       </td>
                                     </React.Fragment>
@@ -3605,29 +3619,27 @@ export default function App() {
                           </table>
                         </div>
 
-                        {/* Grand Total Summary Box on Lembar Timbangan */}
-                        <div className="bg-emerald-50/90 border-2 border-emerald-800 rounded-lg p-3.5 mb-6 flex flex-wrap items-center justify-around gap-4 shadow-2xs font-mono">
-                          <div className="flex flex-col items-center">
-                            <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">TOTAL EKOR</span>
-                            <div className="flex items-baseline gap-1 mt-0.5">
-                              <span className="text-xl font-mono font-black text-slate-900">{grandTotalBirds.toLocaleString()}</span>
-                              <span className="text-xs font-bold text-slate-500">Ekor</span>
+                        {/* Grand Total Summary Box - Simplified & High Contrast */}
+                        <div className="bg-slate-900 border-2 border-emerald-600 rounded-xl p-4 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-md font-mono text-white">
+                          <div className="flex flex-col items-center justify-center bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">TOTAL EKOR</span>
+                            <div className="flex items-baseline gap-1.5 mt-1">
+                              <span className="text-2xl font-mono font-black text-white">{grandTotalBirds.toLocaleString()}</span>
+                              <span className="text-xs font-bold text-slate-400">Ekor</span>
                             </div>
                           </div>
-                          <div className="h-9 w-0.5 bg-emerald-300/80 hidden sm:block"></div>
-                          <div className="flex flex-col items-center">
-                            <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">TOTAL BERAT (NETTO)</span>
-                            <div className="flex items-baseline gap-1 mt-0.5">
-                              <span className="text-xl font-mono font-black text-emerald-700">{grandTotalWeight.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                              <span className="text-xs font-bold text-slate-500">Kg</span>
+                          <div className="flex flex-col items-center justify-center bg-emerald-950 p-3 rounded-lg border border-emerald-800">
+                            <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider">TOTAL BERAT (NETTO)</span>
+                            <div className="flex items-baseline gap-1.5 mt-1">
+                              <span className="text-2xl font-mono font-black text-emerald-300">{grandTotalWeight.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-xs font-bold text-emerald-400">Kg</span>
                             </div>
                           </div>
-                          <div className="h-9 w-0.5 bg-emerald-300/80 hidden sm:block"></div>
-                          <div className="flex flex-col items-center">
-                            <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">RATA-RATA BERAT</span>
-                            <div className="flex items-baseline gap-1 mt-0.5">
-                              <span className="text-xl font-mono font-black text-slate-900">{grandAvgWeight.toFixed(3)}</span>
-                              <span className="text-xs font-bold text-slate-500">Kg/Ekor</span>
+                          <div className="flex flex-col items-center justify-center bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">RATA-RATA BERAT</span>
+                            <div className="flex items-baseline gap-1.5 mt-1">
+                              <span className="text-2xl font-mono font-black text-amber-400">{grandAvgWeight.toFixed(3)}</span>
+                              <span className="text-xs font-bold text-slate-400">Kg/Ekor</span>
                             </div>
                           </div>
                         </div>
@@ -3720,16 +3732,16 @@ export default function App() {
                     <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                       <div className="min-w-[1000px] w-full">
                         <table className="w-full text-left border-collapse">
-                          <thead className="bg-slate-50 text-[9px] uppercase font-black tracking-widest text-slate-400 sticky top-0 z-20 shadow-sm">
+                          <thead className="bg-slate-900 text-[10px] uppercase font-black tracking-wider text-slate-300 sticky top-0 z-20 shadow-sm font-mono">
                             <tr>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50 w-12 text-center">No</th>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Tanggal</th>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Umur</th>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Jumlah Ekor</th>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Rata-rata Bobot</th>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50">Total Bobot (kg)</th>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50 font-black text-emerald-600">IP PANEN</th>
-                              <th className="py-4 px-6 border-b border-slate-100 bg-slate-50 text-right">Aksi</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-950 w-12 text-center text-slate-400">NO</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-900">TANGGAL</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-900">UMUR</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-900">JUMLAH EKOR</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-900">RERATA BOBOT</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-900 text-emerald-400">TOTAL BOBOT (KG)</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-900 text-amber-400">IP PANEN</th>
+                              <th className="py-3 px-4 border-b border-slate-800 bg-slate-900 text-right">AKSI</th>
                             </tr>
                           </thead>
                           <tbody className="text-sm font-bold text-slate-600">
@@ -4356,118 +4368,6 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full overflow-hidden">
                 {/* Visualizations */}
                 <div className="lg:col-span-8 flex flex-col gap-6 overflow-hidden">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm col-span-1">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <TrendingUp size={14} className="text-emerald-500" /> IP Trend
-                        </h3>
-                      </div>
-                      <div className="h-40 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={chartData}>
-                            <defs>
-                              <linearGradient id="colorIp" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis 
-                              dataKey="name" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 700}}
-                            />
-                            <Tooltip />
-                            <Area type="monotone" dataKey="ip" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIp)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm col-span-1">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Beef size={14} className="text-rose-500" /> FCR Trend
-                        </h3>
-                      </div>
-                      <div className="h-40 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis 
-                              dataKey="name" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 700}}
-                            />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="fcr" stroke="#f43f5e" strokeWidth={2} dot={{r: 3, fill: '#f43f5e'}} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm col-span-1">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Activity size={14} className="text-blue-500" /> ADG Trend
-                        </h3>
-                      </div>
-                      <div className="h-40 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={chartData}>
-                            <defs>
-                              <linearGradient id="colorAdg" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis 
-                              dataKey="name" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 700}}
-                            />
-                            <Tooltip />
-                            <Area type="monotone" dataKey="adg" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorAdg)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm col-span-1">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Percent size={14} className="text-amber-500" /> % MORT Trend
-                        </h3>
-                      </div>
-                      <div className="h-40 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={chartData}>
-                            <defs>
-                              <linearGradient id="colorMort" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.1}/>
-                                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis 
-                              dataKey="name" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 700}}
-                            />
-                            <Tooltip />
-                            <Area type="monotone" dataKey="mort" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorMort)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Weekly Mortality vs Feed Consumption Comparison Bar Chart */}
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
@@ -5301,13 +5201,13 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* Android PWA Install Onboarding Modal */}
+        {/* Android & iPhone PWA Install Onboarding Modal */}
         {showAndroidModal && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[110] flex items-center justify-center p-4 text-slate-800"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[110] flex items-center justify-center p-3 sm:p-4 text-slate-800"
             onClick={() => setShowAndroidModal(false)}
           >
             <motion.div 
@@ -5317,63 +5217,63 @@ export default function App() {
               className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row max-h-[92vh] md:max-h-[85vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Left Side: Stunning interactive Android Mockup */}
-              <div className="bg-slate-950 p-6 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-800 shrink-0 md:w-80">
-                <div className="relative w-48 h-96 bg-slate-900 rounded-[40px] border-[6px] border-slate-700 shadow-2xl p-2 flex flex-col overflow-hidden">
-                  {/* Android Top notch */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-700 rounded-b-xl z-20 flex items-center justify-center">
-                    <div className="w-8 h-1 bg-slate-800 rounded-full"></div>
+              {/* Left Side: Stunning interactive Smartphone Mockup */}
+              <div className="bg-slate-950 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-800 shrink-0 md:w-80">
+                <div className="relative w-40 sm:w-48 h-80 sm:h-96 bg-slate-900 rounded-[36px] sm:rounded-[40px] border-[5px] sm:border-[6px] border-slate-700 shadow-2xl p-2 flex flex-col overflow-hidden">
+                  {/* Top notch */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 sm:w-20 h-3.5 sm:h-4 bg-slate-700 rounded-b-xl z-20 flex items-center justify-center">
+                    <div className="w-6 sm:w-8 h-1 bg-slate-800 rounded-full"></div>
                   </div>
                   
-                  {/* Android Screen Content Mockup */}
-                  <div className="w-full h-full flex flex-col bg-slate-950 rounded-[32px] overflow-hidden relative p-4 pt-6">
+                  {/* Smartphone Screen Content Mockup */}
+                  <div className="w-full h-full flex flex-col bg-slate-950 rounded-[28px] sm:rounded-[32px] overflow-hidden relative p-3 sm:p-4 pt-6">
                     {/* Stat Bar */}
-                    <div className="flex justify-between items-center text-[8px] text-emerald-400 font-mono mb-6 pt-1">
-                      <span>LTE / 4G</span>
+                    <div className="flex justify-between items-center text-[8px] text-emerald-400 font-mono mb-4 sm:mb-6 pt-1">
+                      <span>5G / 4G</span>
                       <span>12:30</span>
                       <span>100% 🔋</span>
                     </div>
 
                     {/* App Icon container */}
                     <div className="flex flex-col items-center justify-center flex-1 my-2">
-                      <div className="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-3xl shadow-xl p-0.5 flex items-center justify-center mb-3">
+                      <div className="w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-3xl shadow-xl p-0.5 flex items-center justify-center mb-3">
                         <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center overflow-hidden">
-                          <img src="/icon.svg" className="w-16 h-16" referrerPolicy="no-referrer" alt="Erfours logo" />
+                          <img src="/icon.svg" className="w-12 sm:w-16 h-12 sm:h-16" referrerPolicy="no-referrer" alt="Erfours logo" />
                         </div>
                       </div>
                       <h4 className="text-white text-xs font-black tracking-wider text-center">ERFOURS</h4>
-                      <p className="text-[7px] text-emerald-400 font-bold uppercase tracking-widest mt-1">Erfours brosis APK</p>
+                      <p className="text-[7px] text-emerald-400 font-bold uppercase tracking-widest mt-1">PWA Mobile App</p>
                     </div>
 
-                    {/* Mock Launcher App Drawer */}
-                    <div className="bg-slate-900/80 backdrop-blur rounded-2xl p-2.5 border border-slate-800/60 flex flex-col gap-1.5 mt-auto">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-emerald-500/20 rounded flex items-center justify-center">
-                          <Check size={10} className="text-emerald-400" />
+                    {/* Features summary */}
+                    <div className="bg-slate-900/80 backdrop-blur rounded-2xl p-2 sm:p-2.5 border border-slate-800/60 flex flex-col gap-1 mt-auto">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 bg-emerald-500/20 rounded flex items-center justify-center shrink-0">
+                          <Check size={9} className="text-emerald-400" />
                         </div>
-                        <span className="text-[7px] text-slate-300 font-black">Offline-First Logging</span>
+                        <span className="text-[7px] text-slate-300 font-black">Pencatatan Offline Kandang</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-emerald-500/20 rounded flex items-center justify-center">
-                          <Check size={10} className="text-emerald-400" />
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 bg-emerald-500/20 rounded flex items-center justify-center shrink-0">
+                          <Check size={9} className="text-emerald-400" />
                         </div>
-                        <span className="text-[7px] text-slate-300 font-black">Automatic FCR & IP</span>
+                        <span className="text-[7px] text-slate-300 font-black">Perhitungan Otomatis IP &amp; FCR</span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <p className="text-[10px] text-slate-500 font-mono mt-4 text-center select-none">Paket Distribusi Android PWA</p>
+                <p className="text-[10px] text-slate-500 font-mono mt-3 sm:mt-4 text-center select-none">Android &amp; iPhone App Package</p>
               </div>
 
-              {/* Right Side: Install Onboarding details */}
-              <div className="flex-1 p-6 md:p-8 flex flex-col overflow-y-auto text-slate-200">
-                <div className="flex justify-between items-start mb-6">
+              {/* Right Side: Install Onboarding details with OS Tab Selector */}
+              <div className="flex-1 p-5 sm:p-6 md:p-8 flex flex-col overflow-y-auto text-slate-200">
+                <div className="flex justify-between items-start mb-4">
                   <div>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-wider mb-2">
-                      <Smartphone size={11} /> Android App Edition
+                      <Smartphone size={11} /> Android &amp; iOS Support
                     </div>
-                    <h3 className="text-2xl font-black text-white tracking-tight uppercase">Pasang Aplikasi Erfours</h3>
-                    <p className="text-xs text-slate-400 mt-1 font-medium">Bawa sistem pencatatan ayam pedaging Anda kemana saja dengan performa maksimal.</p>
+                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">Pasang Aplikasi Erfours</h3>
+                    <p className="text-xs text-slate-400 mt-1 font-medium">Bawa sistem pencatatan ayam pedaging Anda di ponsel Android atau iPhone.</p>
                   </div>
                   <button 
                     onClick={() => setShowAndroidModal(false)}
@@ -5383,75 +5283,121 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Android App Key Advantages */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                  <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-xl">
-                    <div className="text-emerald-400 font-black text-sm mb-1">📶 Bebas Offline</div>
-                    <p className="text-[10px] text-slate-400 leading-normal font-bold">Tetap catat timbangan, pakan mati di kandang tanpa sinyal internet.</p>
+                {/* OS Toggle Selector */}
+                <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 mb-5">
+                  <button
+                    type="button"
+                    onClick={() => setInstallOsTab('android')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${installOsTab === 'android' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    <span>🤖 HP Android (Chrome)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInstallOsTab('iphone')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${installOsTab === 'iphone' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    <span>🍎 iPhone / iOS (Safari)</span>
+                  </button>
+                </div>
+
+                {/* Key Advantages */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-5">
+                  <div className="bg-slate-950/60 border border-slate-800 p-3 rounded-xl">
+                    <div className="text-emerald-400 font-black text-xs mb-1">📶 Bebas Offline</div>
+                    <p className="text-[10px] text-slate-400 leading-normal font-bold">Tetap catat timbangan &amp; pakan di kandang tanpa sinyal internet.</p>
                   </div>
-                  <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-xl">
-                    <div className="text-emerald-400 font-black text-sm mb-1">⚡ Instant Launch</div>
-                    <p className="text-[10px] text-slate-400 leading-normal font-bold">Membuka secepat kilat dengan ikon pintasan resmi di layar utama ponsel.</p>
+                  <div className="bg-slate-950/60 border border-slate-800 p-3 rounded-xl">
+                    <div className="text-emerald-400 font-black text-xs mb-1">⚡ Buka Secepat Kilat</div>
+                    <p className="text-[10px] text-slate-400 leading-normal font-bold">Pintasan resmi dengan ikon mandiri di layar utama ponsel Anda.</p>
                   </div>
-                  <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-xl">
-                    <div className="text-emerald-400 font-black text-sm mb-1">📲 Tanpa Ruang Besar</div>
-                    <p className="text-[10px] text-slate-400 leading-normal font-bold">Ukuran sangat kecil (di bawah 1MB) dibandingkan aplikasi PlayStore konvensional.</p>
+                  <div className="bg-slate-950/60 border border-slate-800 p-3 rounded-xl">
+                    <div className="text-emerald-400 font-black text-xs mb-1">📲 Ringan &amp; Hemat Memory</div>
+                    <p className="text-[10px] text-slate-400 leading-normal font-bold">Ukuran sangat kecil (di bawah 1MB) tanpa beban memori HP.</p>
                   </div>
                 </div>
 
                 {/* Installation Flow */}
-                <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-5 mb-6 flex-1">
-                  <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider mb-3.5">Petunjuk Pemasangan Aplikasi:</h4>
-                  
-                  {deferredPrompt ? (
-                    <div className="space-y-4">
-                      <p className="text-xs text-slate-300 font-bold leading-relaxed">
-                        Browser Anda mendeteksi bahwa aplikasi Erfours siap dipasang secara langsung sebagai aplikasi Android asli yang didukung oleh integrasi WebAPK Google.
-                      </p>
-                      <button
-                        onClick={() => {
-                          deferredPrompt.prompt();
-                          deferredPrompt.userChoice.then((choiceResult: any) => {
-                            if (choiceResult.outcome === 'accepted') {
-                              setIsWebAppInstalled(true);
-                              setShowAndroidModal(false);
-                            }
-                            setDeferredPrompt(null);
-                          });
-                        }}
-                        className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all rounded-xl font-bold text-sm tracking-wide text-white shadow-xl shadow-emerald-950/20 cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <Smartphone size={18} /> PASANG APLIKASI SEKARANG
-                      </button>
-                    </div>
+                <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 sm:p-5 mb-5 flex-1">
+                  {installOsTab === 'android' ? (
+                    <>
+                      <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider mb-3">Petunjuk Android (Google Chrome):</h4>
+                      {deferredPrompt ? (
+                        <div className="space-y-4">
+                          <p className="text-xs text-slate-300 font-bold leading-relaxed">
+                            Browser Anda mendeteksi bahwa aplikasi Erfours siap dipasang secara langsung sebagai aplikasi Android asli yang didukung oleh integrasi WebAPK Google.
+                          </p>
+                          <button
+                            onClick={() => {
+                              deferredPrompt.prompt();
+                              deferredPrompt.userChoice.then((choiceResult: any) => {
+                                if (choiceResult.outcome === 'accepted') {
+                                  setIsWebAppInstalled(true);
+                                  setShowAndroidModal(false);
+                                }
+                                setDeferredPrompt(null);
+                              });
+                            }}
+                            className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all rounded-xl font-bold text-xs sm:text-sm tracking-wide text-slate-950 shadow-xl shadow-emerald-950/20 cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <Smartphone size={18} /> PASANG APLIKASI ANDROID SEKARANG
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 text-xs text-slate-300">
+                          <p className="font-bold text-amber-400">Ikuti langkah sederhana ini dari Chrome Android:</p>
+                          <div className="space-y-2.5">
+                            <div className="flex items-start gap-3">
+                              <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
+                              <span className="leading-relaxed">Buka situs ini di browser <strong>Google Chrome</strong> di HP Android.</span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
+                              <span className="leading-relaxed">Ketuk menu di kanan atas Chrome (<strong>ikon titik tiga ⁝</strong>).</span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
+                              <span className="leading-relaxed">Pilih menu <strong>"Instal Aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">4</span>
+                              <span className="leading-relaxed">Tekan <strong>"Instal"</strong>. Ikon Erfours akan muncul di layar HP Anda.</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <div className="space-y-3.5 text-xs text-slate-300">
-                      <p className="font-bold text-amber-400">Ponsel Anda dapat memasangnya lewat petunjuk sederhana berikut:</p>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-4">
-                          <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
-                          <span className="leading-relaxed">Buka halaman situs ini dari aplikasi browser <strong>Google Chrome</strong> di HP Android Anda.</span>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
-                          <span className="leading-relaxed">Ketuk menu setelan di kanan atas browser Chrome Anda (<strong>ikon titik tiga ⁝</strong>).</span>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
-                          <span className="leading-relaxed">Pilih tulisan <strong>"Instal Aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</span>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">4</span>
-                          <span className="leading-relaxed">Tekan tombol <strong>"Instal"</strong>. Selesai! Erfours siap berjalan di HP Anda dengan ikon mandiri.</span>
+                    <>
+                      <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider mb-3">Petunjuk iPhone / iOS (Apple Safari):</h4>
+                      <div className="space-y-3 text-xs text-slate-300">
+                        <p className="font-bold text-amber-400">Ikuti langkah mudah ini dari Safari iPhone:</p>
+                        <div className="space-y-2.5">
+                          <div className="flex items-start gap-3">
+                            <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
+                            <span className="leading-relaxed">Pastikan Anda membuka alamat ini melalui browser resmi <strong>Safari</strong> di iPhone.</span>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
+                            <span className="leading-relaxed">Ketuk tombol <strong>Bagikan / Share (ikon kotak panah ke atas ⎋)</strong> di baris menu bawah Safari.</span>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
+                            <span className="leading-relaxed">Gulir ke bawah pada menu pilihan dan pilih <strong>"Tambahkan ke Layar Utama" (Add to Home Screen)</strong>.</span>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="w-5 h-5 bg-slate-800 text-emerald-400 text-[10px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5">4</span>
+                            <span className="leading-relaxed">Ketuk tulisan <strong>"Tambah"</strong> di pojok kanan atas. Aplikasi Erfours kini terpasang sempurna di layar iPhone Anda!</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
 
                 {/* Footer status */}
-                <div className="flex items-center justify-between border-t border-slate-800 text-[10px] text-slate-500 font-mono mt-auto pt-4">
-                  <span>PWA Versi 1.0.0 (API v2)</span>
+                <div className="flex items-center justify-between border-t border-slate-800 text-[10px] text-slate-500 font-mono mt-auto pt-3">
+                  <span>PWA Versi 1.0.0 (Android &amp; iOS)</span>
                   <div className="flex items-center gap-1.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${isWebAppInstalled ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                     <span>Status: {isWebAppInstalled ? 'Terpasang di Perangkat' : 'Siap Dipasang'}</span>
@@ -5462,6 +5408,63 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Fixed Bottom Navigation Bar for Mobile Phones (Android & iPhone) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-emerald-950/95 backdrop-blur-md border-t border-emerald-800/80 md:hidden flex items-center justify-around py-1.5 px-1 text-white shadow-2xl pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          onClick={() => setView('daily')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all touch-manipulation cursor-pointer ${view === 'daily' ? 'text-emerald-400 font-black bg-emerald-900/80 scale-105' : 'text-slate-400 hover:text-emerald-200'}`}
+        >
+          <Calendar size={18} />
+          <span className="text-[9px] mt-0.5 font-bold uppercase tracking-tight">Harian</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setView('inventory')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all touch-manipulation cursor-pointer ${view === 'inventory' ? 'text-emerald-400 font-black bg-emerald-900/80 scale-105' : 'text-slate-400 hover:text-emerald-200'}`}
+        >
+          <Package size={18} />
+          <span className="text-[9px] mt-0.5 font-bold uppercase tracking-tight">Stok</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setView('harvest')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all touch-manipulation cursor-pointer ${view === 'harvest' ? 'text-emerald-400 font-black bg-emerald-900/80 scale-105' : 'text-slate-400 hover:text-emerald-200'}`}
+        >
+          <Truck size={18} />
+          <span className="text-[9px] mt-0.5 font-bold uppercase tracking-tight">Panen</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setView('weighing')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all touch-manipulation cursor-pointer ${view === 'weighing' ? 'text-emerald-400 font-black bg-emerald-900/80 scale-105' : 'text-slate-400 hover:text-emerald-200'}`}
+        >
+          <Scale size={18} />
+          <span className="text-[9px] mt-0.5 font-bold uppercase tracking-tight">Timbang</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setView('cumulative')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all touch-manipulation cursor-pointer ${view === 'cumulative' ? 'text-emerald-400 font-black bg-emerald-900/80 scale-105' : 'text-slate-400 hover:text-emerald-200'}`}
+        >
+          <TrendingUp size={18} />
+          <span className="text-[9px] mt-0.5 font-bold uppercase tracking-tight">IP</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setView('history')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all touch-manipulation cursor-pointer ${view === 'history' ? 'text-emerald-400 font-black bg-emerald-900/80 scale-105' : 'text-slate-400 hover:text-emerald-200'}`}
+        >
+          <History size={18} />
+          <span className="text-[9px] mt-0.5 font-bold uppercase tracking-tight">Riwayat</span>
+        </button>
+      </nav>
     </div>
   );
 }
